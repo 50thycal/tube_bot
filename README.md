@@ -19,12 +19,13 @@ pytest
 |---|---|---|
 | `GEMINI_API_KEY` | required | Gemini API key (`.env` locally, repo secret in Actions) |
 | `YTA_MODEL` | `gemini-3.8-flash` | Gemini model id. The default is the current Flash model in Google's video-understanding docs and cookbook. |
-| `YTA_ENGINE` | `agentic` | `agentic` (Interactions API, one call, falls back to static) or `static` (generate_content windows) |
+| `YTA_ENGINE` | `static` | `static` (generate_content windows) or `agentic` (experimental: Interactions API, one call, falls back to static) |
 | `YTA_THINKING_LEVEL` | model default | agentic engine: `minimal`/`low`/`medium`/`high` |
 | `YTA_AGENTIC_TIMEOUT_S` | `1800` | give up (and cancel) a background interaction after this long |
-| `YTA_CHUNK_MINUTES` | `15` | static engine: window size for long videos |
-| `YTA_SINGLE_PASS_MAX_MINUTES` | `15` | static engine: videos of known length up to this get a single request |
-| `YTA_MAX_WINDOWS` | `16` | static engine: cap on windows when the length is unknown (16 × 15 min = 4 h) |
+| `YTA_CHUNK_MINUTES` | `7` | static engine: window size for long videos |
+| `YTA_SINGLE_PASS_MAX_MINUTES` | `7` | static engine: videos of known length up to this get a single request |
+| `YTA_MAX_WINDOWS` | `16` | static engine: cap on windows when the length is unknown (16 × 7 min ≈ 1 h 50 min; raise for longer videos) |
+| `YTA_DROP_RETRIES` | `0` | static engine: re-send a dropped window at the same size this many times before splitting it |
 | `YTA_MAX_OUTPUT_TOKENS` | model max | cap on output tokens |
 
 ## CLI
@@ -37,7 +38,7 @@ yta render videos/<dir>/raw.json      # re-render digest.md, no API call
 - Accepts `watch?v=`, `youtu.be/`, `/shorts/`, `/live/`, `/embed/`, `m.`/`music.` hosts, a bare 11-character id, and URLs with `&t=`, `&list=`, `&index=` or `?si=` (those params are stripped). Only the canonical `https://www.youtube.com/watch?v=<id>` is sent to Gemini.
 - Results are deduplicated on video id: an already-analyzed video is skipped unless you pass `--force`, which replaces its directory and its index line.
 - `--low-res` sets `MEDIA_RESOLUTION_LOW`, which uses about 3x fewer video tokens. Use it for talking-head videos; skip it when small chart labels matter.
-- Exit codes: `0` ok/skipped, `2` bad URL, `3` video unavailable (private, age-gated or removed), `4` extraction failed.
+- Exit codes: `0` ok/skipped, `2` bad URL, `3` video unavailable (private, age-gated or removed), `4` extraction failed, `5` daily API quota exhausted.
 
 ## Output
 
@@ -67,22 +68,32 @@ Timestamps are absolute `HH:MM:SS`. Values on visuals are transcribed exactly as
 
 ## Engines
 
-**`agentic` (default).** One [Interactions API](https://ai.google.dev/gemini-api/docs/video-understanding) call with the YouTube URL and `processing: "agentic"`. The model navigates the timeline itself, loading the transcript and frames on demand, instead of decoding every frame up front. One call covers the whole video, so there are no windows to merge and no cross-window duplicates. The call runs with `background=True` and is polled, so no HTTP request is held open while the server works. Output is constrained by the same JSON schema (`response_format`). If the interaction fails, the run falls back to `static`. A private or unavailable video fails immediately.
+**`static` (default).** `generate_content` with the URL as a `file_data` part, clipped into windows with `video_metadata` offsets. Synchronous requests on YouTube URLs are dropped once they have been processing for roughly 255–270 s. Window length is set from live success rates:
 
-**`static`.** `generate_content` with the URL as a `file_data` part, clipped into windows with `video_metadata` offsets. Synchronous requests on YouTube URLs were seen to be dropped after roughly 255–270 s, largely independent of clip length. 5-minute clips took 132–255 s, a 15-minute clip ~255 s, and 10-minute clips were dropped. Whole-video requests, even a low-res duration probe, were dropped too.
+| Window | Succeeded | Notes |
+|---|---|---|
+| 5 min | 4/4 | 132–255 s |
+| 7.5 min | 6/6 | ≤249 s |
+| 10 min | 0/2 | |
+| 15 min | 1/6 | |
+| whole video | 0/3 | including a low-res duration probe |
 
-This design follows what similar tools do. [tubetell](https://github.com/chhib/tubetell) uses agentic mode for long videos, and its static spans run sequentially and retry dropped connections before anything else. [video-intel](https://github.com/dzivkovi/video-intel) chunks long videos into windows and reports that YouTube offset clipping is unreliable on 3.x models.
+Re-sending a dropped window at the same size succeeded 0 of 3 times, so a drop splits the window immediately.
+
+**`agentic` (experimental, `--engine agentic`).** One [Interactions API](https://ai.google.dev/gemini-api/docs/video-understanding) call with the YouTube URL and `processing: "agentic"`. The model navigates the timeline itself, loading the transcript and frames on demand, instead of decoding every frame up front. One call covers the whole video, so there are no windows to merge and no cross-window duplicates. The call runs with `background=True` and is polled, so no HTTP request is held open while the server works. Output is constrained by the same JSON schema (`response_format`). If the interaction fails, it is retried once with the schema in the prompt instead of `response_format`, and then the run falls back to `static`. A private or unavailable video fails immediately. **Status:** on the first test video it failed 3 out of 3 times. Each attempt ran a `processing_call`/`processing_result` step, then ended "There was a problem processing your request" with 0 tokens, both with and without `response_format`. The cause, whether the free tier, the prompt, or this video, is not yet known, so it is opt-in.
+
+This design follows what similar tools do. [tubetell](https://github.com/chhib/tubetell) uses agentic mode for long videos and sequential static spans. [video-intel](https://github.com/dzivkovi/video-intel) chunks long videos into windows and reports that YouTube offset clipping is unreliable on 3.x models.
 
 ### Static engine: long videos
 
 1. Duration comes from the watch page when YouTube serves it. On CI runners it usually serves a bot check instead.
-2. **Known length ≤ `YTA_SINGLE_PASS_MAX_MINUTES` (15):** one request. If it fails on input length, the output is truncated (`MAX_TOKENS`), the server returns 504, or the connection drops, the run falls back to windows.
-3. **Known length > 15 minutes:** planned ~15-minute windows.
+2. **Known length ≤ `YTA_SINGLE_PASS_MAX_MINUTES` (7):** one request. If it fails on input length, the output is truncated (`MAX_TOKENS`), the server returns 504, or the connection drops, the run falls back to windows.
+3. **Known length > 7 minutes:** planned ~7-minute windows.
 4. **Unknown length:** the video is never sent whole. Windows are walked from 0:00. Each clip response carries `clip_has_video` and `video_ended_in_clip`, and the walk stops when the video ends, when a clip is empty or past the end, or after `YTA_MAX_WINDOWS`.
-5. Windows use `video_metadata` start/end offsets, with one streamed structured extraction per window. A dropped connection is retried once on the same window. A window that is still too heavy is split in half, down to 5 minutes. Each call's duration and token count are logged.
+5. Windows use `video_metadata` start/end offsets, with one streamed structured extraction per window. A window whose connection drops, or that is too heavy, is split in half, down to 5 minutes. Each call's duration and token count are logged.
 6. The windows are merged. Timestamps stay absolute: if the model reported clip-relative times, they are detected and shifted. Lists are concatenated in time order, strategies and tools are deduplicated by name, and the summary is the per-window summaries labelled by window (deterministic, no extra LLM call).
 
-Retries: HTTP 408/429/500/502/503 get exponential backoff with jitter, up to 5 retries. In the static engine, a dropped connection is retried once, then it and a 504 are treated as "too heavy" and retried as smaller windows. Private, age-gated and removed videos fail with a clear error, raised from oEmbed, the watch page's `playabilityStatus`, or Gemini's own error.
+Retries: HTTP 408/429/500/502/503 get exponential backoff with jitter, up to 5 retries. A **daily** quota 429 (the free tier allows 20 requests per day per model) fails immediately with a clear message, and the CLI exits with code 5. In the static engine, a dropped connection or a 504 is treated as "too heavy" and retried as smaller windows. Private, age-gated and removed videos fail with a clear error, raised from oEmbed, the watch page's `playabilityStatus`, or Gemini's own error.
 
 ## GitHub Action
 
@@ -128,6 +139,7 @@ These figures come from Google's docs at the time of writing; check the current 
 - Video tokens are roughly **~300 tokens/s** at default resolution (1 fps frames plus audio) and **~100 tokens/s** at low resolution. A 30-minute video is ~540k input tokens at default and ~180k at low res. Cost ≈ input tokens × the model's input price + output and thinking tokens × the output price. Every run records the actual usage in `raw.json` and `index.jsonl`.
 - YouTube URL input supports **public videos only**. Private videos and some restricted (age-gated or region-locked) videos fail. The free tier caps the amount of YouTube video per day (8 h at the time of writing), and the paid tier has no such cap.
 - Long videos cost proportionally more. `--low-res` is the main cost lever.
+- **Free-tier request cap.** The free tier allows **20 generate requests per day per model**, and failed or retried requests count. A 17-minute video takes about 3–4 requests at 7-minute windows, and an hour-long video about 9. For regular use, enable billing on the key's Google Cloud project: the paid tier lifts this cap and the 8 h/day YouTube cap. At the measured ~120k tokens for a 17-minute video, a video costs cents on Flash.
 
 ## Security
 

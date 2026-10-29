@@ -77,7 +77,9 @@ def analyze(
     meta = metadata_fetcher(canon)
     model = resolve_model(model)
     run = _Run()
-    engine = engine or os.environ.get("YTA_ENGINE") or "agentic"
+    # Agentic is opt-in: on the first live video it failed 3/3 ("There was a problem
+    # processing your request", 0 tokens) with and without response_format.
+    engine = engine or os.environ.get("YTA_ENGINE") or "static"
     if engine not in ("agentic", "static"):
         raise ValueError(f"unknown engine {engine!r} (agentic|static)")
     duration = meta.duration_s
@@ -138,8 +140,10 @@ def _static_extract(
     still processing after ~255-270 s, and a video of unknown length is never sent
     whole (even a low-res full-video probe was dropped).
     """
-    window_s = _env_int("YTA_CHUNK_MINUTES", 15) * 60
-    max_single_s = _env_int("YTA_SINGLE_PASS_MAX_MINUTES", 15) * 60
+    # Live success rate by window length: 5 min 4/4, 7.5 min 6/6 (<=249 s),
+    # 10 min 0/2, 15 min 1/6 (the rest dropped at ~255-270 s).
+    window_s = _env_int("YTA_CHUNK_MINUTES", 7) * 60
+    max_single_s = _env_int("YTA_SINGLE_PASS_MAX_MINUTES", 7) * 60
     max_windows = _env_int("YTA_MAX_WINDOWS", 16)
 
     if duration and duration <= max_single_s:

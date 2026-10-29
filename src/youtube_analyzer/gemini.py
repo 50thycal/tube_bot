@@ -80,6 +80,23 @@ class PastEnd(RuntimeError):
     """A clip was requested beyond the end of the video."""
 
 
+class QuotaExhausted(RuntimeError):
+    """A daily (not per-minute) quota is spent; retrying is pointless until it resets."""
+
+
+def daily_quota_error(e: Exception) -> QuotaExhausted | None:
+    """Map a 429 for a per-day quota (e.g. free tier: 20 requests/day/model) to QuotaExhausted."""
+    code = getattr(e, "code", None) or getattr(e, "status_code", None)
+    msg = str(e)
+    if code == 429 and ("PerDay" in msg or "per day" in msg.lower()):
+        return QuotaExhausted(
+            "Gemini daily request quota exhausted (free tier allows 20 generate requests/day/model; "
+            "failed requests count). Enable billing on the API key's project, or wait for the daily reset. "
+            f"Detail: {msg[:300]}"
+        )
+    return None
+
+
 @dataclass
 class CallResult:
     content: BaseModel
@@ -144,14 +161,16 @@ class GeminiExtractor:
         low_res: bool = False,
         client: genai.Client | None = None,
         max_retries: int = 5,
-        drop_retries: int = 1,
+        drop_retries: int | None = None,
         sleep: Callable[[float], None] = time.sleep,
     ):
         self.model = model
         self.low_res = low_res
         self._client = client
         self.max_retries = max_retries
-        self.drop_retries = drop_retries
+        # Live data: re-sending a dropped window at the same size succeeded 0/3 times,
+        # while halving succeeded every time, so by default a drop splits immediately.
+        self.drop_retries = drop_retries if drop_retries is not None else int(os.environ.get("YTA_DROP_RETRIES", 0))
         self._sleep = sleep
         mot = os.environ.get("YTA_MAX_OUTPUT_TOKENS")
         self.max_output_tokens = int(mot) if mot else None
@@ -243,6 +262,9 @@ class GeminiExtractor:
                 raise TooLong(f"connection dropped/timed out ({type(e).__name__}: {e}); request likely too heavy") from e
             except errors.APIError as e:
                 code = getattr(e, "code", None)
+                quota = daily_quota_error(e)
+                if quota is not None:
+                    raise quota from e
                 if code in HEAVY_CODES:
                     raise TooLong(f"server deadline exceeded (HTTP {code}): {e}") from e
                 if code in RETRYABLE_CODES and attempt < self.max_retries:

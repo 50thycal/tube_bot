@@ -21,7 +21,7 @@ import httpx
 from pydantic import ValidationError
 
 from . import prompt
-from .gemini import CallResult, ExtractionFailed, classify_error
+from .gemini import CallResult, ExtractionFailed, QuotaExhausted, classify_error, daily_quota_error
 from .metadata import VideoUnavailable
 from .schema import ContentExtraction, Usage
 
@@ -181,8 +181,11 @@ class AgenticExtractor:
             try:
                 return fn()
             except Exception as e:  # Interactions raises its own GenAiError family, plus httpx errors
-                if isinstance(e, (ExtractionFailed, VideoUnavailable)):
+                if isinstance(e, (ExtractionFailed, VideoUnavailable, QuotaExhausted)):
                     raise
+                quota = daily_quota_error(e)
+                if quota is not None:
+                    raise quota from e
                 code = _status_code(e)
                 transient = isinstance(e, httpx.TransportError) or code in RETRYABLE_STATUS
                 if transient and attempt < self.max_retries:

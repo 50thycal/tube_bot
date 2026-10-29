@@ -129,6 +129,15 @@ def test_agentic_private_video_is_unavailable():
         ex.extract(URL)
 
 
+def test_agentic_daily_quota_fails_fast():
+    from youtube_analyzer.gemini import QuotaExhausted
+
+    ex, client = _ex([], create_errors=[_HTTPErr(429, "Quota exceeded: GenerateRequestsPerDayPerProjectPerModel-FreeTier")] * 3)
+    with pytest.raises(QuotaExhausted, match="daily request quota"):
+        ex.extract(URL)
+    assert len(client.interactions.created) == 1
+
+
 def test_agentic_other_client_error_is_extraction_failed():
     ex, _ = _ex([], create_errors=[_HTTPErr(400, "Request contains an invalid argument.")] * 2)
     with pytest.raises(ExtractionFailed, match="invalid argument"):
@@ -197,8 +206,8 @@ def _env(monkeypatch):
         monkeypatch.delenv(k, raising=False)
 
 
-def test_pipeline_defaults_to_agentic(tmp_path, sample):
-    r = analyze(URL, tmp_path, agentic_extractor=FakeAgentic(sample), extractor=FailStatic(), metadata_fetcher=_meta)
+def test_pipeline_agentic_engine(tmp_path, sample):
+    r = analyze(URL, tmp_path, engine="agentic", agentic_extractor=FakeAgentic(sample), extractor=FailStatic(), metadata_fetcher=_meta)
     run = r.analysis.run
     assert run.engine == "agentic" and not run.chunked and run.calls == 1 and run.windows == []
     assert r.analysis.video.duration_s == 900  # last segment end in the sample
@@ -207,7 +216,7 @@ def test_pipeline_defaults_to_agentic(tmp_path, sample):
 
 
 def test_pipeline_records_prompt_json_variant(tmp_path, sample):
-    r = analyze(URL, tmp_path, agentic_extractor=FakeAgentic(sample, variant="prompt_json"), extractor=FailStatic(), metadata_fetcher=_meta)
+    r = analyze(URL, tmp_path, engine="agentic", agentic_extractor=FakeAgentic(sample, variant="prompt_json"), extractor=FailStatic(), metadata_fetcher=_meta)
     assert r.analysis.run.engine == "agentic:prompt_json"
 
 
@@ -227,17 +236,22 @@ def test_pipeline_falls_back_to_static(tmp_path, sample):
     err = ExtractionFailed("agentic interaction int_1 ended failed")
     err.usage = None
     static = Static()
-    r = analyze(URL, tmp_path, agentic_extractor=FakeAgentic(error=err), extractor=static, metadata_fetcher=_meta)
+    r = analyze(URL, tmp_path, engine="agentic", agentic_extractor=FakeAgentic(error=err), extractor=static, metadata_fetcher=_meta)
     assert r.analysis.run.engine == "static" and static.calls == 1
 
 
 def test_pipeline_unavailable_does_not_fall_back(tmp_path):
     with pytest.raises(VideoUnavailable):
-        analyze(URL, tmp_path, agentic_extractor=FakeAgentic(error=VideoUnavailable("private")), extractor=FailStatic(), metadata_fetcher=_meta)
+        analyze(URL, tmp_path, engine="agentic", agentic_extractor=FakeAgentic(error=VideoUnavailable("private")), extractor=FailStatic(), metadata_fetcher=_meta)
 
 
-def test_engine_static_skips_agentic(tmp_path, sample, monkeypatch):
-    monkeypatch.setenv("YTA_ENGINE", "static")
+def test_engine_env_selects_agentic(tmp_path, sample, monkeypatch):
+    monkeypatch.setenv("YTA_ENGINE", "agentic")
+    r = analyze(URL, tmp_path, agentic_extractor=FakeAgentic(sample), extractor=FailStatic(), metadata_fetcher=_meta)
+    assert r.analysis.run.engine == "agentic"
+
+
+def test_default_engine_is_static(tmp_path, sample):
     ag = FakeAgentic(sample)
     with pytest.raises(AssertionError, match="static path"):
         analyze(URL, tmp_path, agentic_extractor=ag, extractor=FailStatic(), metadata_fetcher=_meta)
