@@ -21,7 +21,9 @@ from .urls import normalize
 
 log = logging.getLogger(__name__)
 
-MIN_WINDOW_S = 5 * 60
+# Floor for halving a dropped window. Must be well under the default window
+# (7 min) or windows could never be split (a 5-min floor made 7-min windows unsplittable).
+MIN_WINDOW_S = 2 * 60
 
 
 def _env_int(name: str, default: int) -> int:

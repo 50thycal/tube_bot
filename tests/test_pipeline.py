@@ -201,6 +201,16 @@ def test_window_split_when_still_too_long(tmp_path, sample):
     assert spans == [(0, 450), (450, 900), (900, 1350), (1350, 1800)]
 
 
+def test_default_seven_minute_window_can_be_split(tmp_path, sample, monkeypatch):
+    monkeypatch.delenv("YTA_CHUNK_MINUTES")
+    monkeypatch.delenv("YTA_SINGLE_PASS_MAX_MINUTES")
+    sample["segments"][-1]["end_ts"] = "00:03:00"
+    ex = FakeExtractor(sample, duration=420, too_long=lambda w: w is None or (w.end_s - w.start_s) > 300)
+    r = analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(None), now=NOW)
+    assert [w.start_s for w in r.analysis.run.windows] == [0, 210]  # 7-min window halved, not aborted
+    assert [c[2].end_s - c[2].start_s for c in ex.calls if c[2]] == [420, 210, 210]
+
+
 def test_nothing_extracted_fails(tmp_path, sample):
     ex = FakeExtractor(sample, duration=0)
     with pytest.raises(ExtractionFailed, match="no window"):

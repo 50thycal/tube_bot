@@ -211,6 +211,14 @@ class GeminiExtractor:
             cfg.media_resolution = types.MediaResolution.MEDIA_RESOLUTION_LOW
         if self.max_output_tokens:
             cfg.max_output_tokens = self.max_output_tokens
+        # Every drop so far happened before the server sent anything. Streaming the
+        # model's thought summaries gets bytes on the wire while it reasons;
+        # response.text ignores thought parts, so the JSON is unaffected.
+        thinking = types.ThinkingConfig(include_thoughts=os.environ.get("YTA_STREAM_THOUGHTS", "1") != "0")
+        level = os.environ.get("YTA_THINKING_LEVEL")
+        if level:
+            thinking.thinking_level = types.ThinkingLevel(level.upper())
+        cfg.thinking_config = thinking
         return cfg
 
     def _call(
@@ -241,7 +249,14 @@ class GeminiExtractor:
     def _generate(self, contents: list[types.Content], config: types.GenerateContentConfig) -> types.GenerateContentResponse:
         # Streamed so the connection carries data as soon as the model produces any;
         # a long silent non-streaming request was dropped by the server (~4.5 min).
-        chunks = list(self.client.models.generate_content_stream(model=self.model, contents=contents, config=config))
+        t0 = time.monotonic()
+        chunks = []
+        for chunk in self.client.models.generate_content_stream(model=self.model, contents=contents, config=config):
+            if not chunks:
+                parts = chunk.candidates[0].content.parts if chunk.candidates and chunk.candidates[0].content else None
+                kind = "thought" if parts and any(p.thought for p in parts) else "text"
+                log.info("first stream chunk after %.0fs (%s)", time.monotonic() - t0, kind)
+            chunks.append(chunk)
         return _join_chunks(chunks)
 
     def _with_retries(self, fn: Callable[[], types.GenerateContentResponse]) -> types.GenerateContentResponse:
