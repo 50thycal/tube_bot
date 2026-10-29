@@ -1,6 +1,7 @@
-https://youtu.be/z97PnFIPoFg --force
+https://youtu.be/z97PnFIPoFg --force --model=gemini-3.7-flash
 # retry 2026-10-29: first run hit a dropped connection on a single-pass request
 # retry 2: never send the whole video; walk clipped windows with streaming
 # validation re-run 2026-10-29: 10-min windows + last-window trim (post PR #3)
 # A/B 2026-10-29: agentic engine (Interactions API, background+poll) vs static run a9ed50b
 # A/B 2: agentic retry with schema-in-prompt when response_format interaction fails
+# validation 2026-10-29: 7-min windows on gemini-3.7-flash (3.8 free-tier quota spent)

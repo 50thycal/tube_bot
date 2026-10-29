@@ -24,7 +24,7 @@ on:
   # Request queue: pushing a requests/*.txt file on a claude/** branch analyzes
   # the URLs in it. Lets an agent that can push commits (but not dispatch
   # workflows) queue a video. One request per line:
-  #   <url> [--force] [--low-res] [--engine=agentic|--engine=static]
+  #   <url> [--force] [--low-res] [--engine=agentic|--engine=static] [--model=gemini-...]
   push:
     branches: ["claude/**"]
     paths: ["requests/*.txt"]
@@ -118,6 +118,10 @@ jobs:
             for flag in $rest; do
               case "$flag" in
                 --force|--low-res|--engine=agentic|--engine=static) args+=("$flag") ;;
+                --model=*)
+                  # Free-tier quotas are per model, so a request can pick another one.
+                  if [[ "$flag" =~ ^--model=gemini-[a-z0-9.-]+$ ]]; then args+=("$flag")
+                  else echo "::warning::ignoring invalid model flag '$flag'"; fi ;;
                 *) echo "::warning::ignoring unknown flag '$flag'" ;;
               esac
             done
