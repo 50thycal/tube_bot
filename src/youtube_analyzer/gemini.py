@@ -31,7 +31,9 @@ RETRYABLE_CODES = {408, 429, 500, 502, 503}
 # Server gave up on the request: retrying the same heavy request rarely helps, so
 # these surface as TooLong and the pipeline retries with smaller windows instead.
 HEAVY_CODES = {504}
-HTTP_TIMEOUT_MS = 15 * 60 * 1000
+# Successful static calls have all finished within ~255 s; a streamed request that
+# stalls is cut off here instead of hanging (one hung ~10 min, twice).
+HTTP_TIMEOUT_MS = 6 * 60 * 1000
 
 _PAST_END_HINTS = ("offset", "video duration", "out of range", "beyond the end")
 
@@ -83,6 +85,7 @@ class CallResult:
     content: BaseModel
     usage: Usage
     model_version: str
+    variant: str = ""  # agentic: "response_format" | "prompt_json"
 
 
 def resolve_model(cli_value: str | None = None) -> str:

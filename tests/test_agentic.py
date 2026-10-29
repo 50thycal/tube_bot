@@ -77,14 +77,26 @@ def test_agentic_thinking_level(sample, monkeypatch):
 
 @pytest.mark.parametrize("status", ["failed", "incomplete", "cancelled", "budget_exceeded"])
 def test_agentic_terminal_failure(status):
-    ex, _ = _ex([_interaction(status, errors=[NS(message="boom")])])
+    ex, client = _ex([_interaction(status, errors=[NS(message="boom")])] * 2)
     with pytest.raises(ExtractionFailed, match=status) as ei:
         ex.extract(URL)
-    assert ei.value.usage.total_tokens == 41000
+    assert len(client.interactions.created) == 2  # response_format, then prompt_json
+    assert ei.value.usage.total_tokens == 82000
+
+
+def test_agentic_falls_back_to_schema_in_prompt(sample):
+    fenced = "```json\n" + json.dumps(sample) + "\n```"
+    ex, client = _ex([_interaction("failed", errors=[NS(message="There was a problem processing your request.")]), _interaction("completed", fenced)])
+    res = ex.extract(URL)
+    first, second = client.interactions.created
+    assert "response_format" in first and "response_format" not in second and "response_mime_type" not in second
+    assert '"clip_has_video"' not in second["input"][1]["text"] and '"strategies"' in second["input"][1]["text"]
+    assert res.variant == "prompt_json" and res.content.summary == sample["summary"]
+    assert res.usage.total_tokens == 82000  # failed attempt's usage is kept
 
 
 def test_agentic_invalid_output():
-    ex, _ = _ex([_interaction("completed", '{"summary": "x"}')])
+    ex, _ = _ex([_interaction("completed", '{"summary": "x"}')] * 2)
     with pytest.raises(ExtractionFailed, match="schema validation"):
         ex.extract(URL)
 
@@ -96,6 +108,7 @@ def test_agentic_timeout_cancels():
     with pytest.raises(ExtractionFailed, match="still in_progress"):
         ex.extract(URL)
     assert client.interactions.cancelled == ["int_1"]
+    assert len(client.interactions.created) == 1  # a timeout is not retried with the other variant
 
 
 class _HTTPErr(Exception):
@@ -117,7 +130,7 @@ def test_agentic_private_video_is_unavailable():
 
 
 def test_agentic_other_client_error_is_extraction_failed():
-    ex, _ = _ex([], create_errors=[_HTTPErr(400, "Request contains an invalid argument.")])
+    ex, _ = _ex([], create_errors=[_HTTPErr(400, "Request contains an invalid argument.")] * 2)
     with pytest.raises(ExtractionFailed, match="invalid argument"):
         ex.extract(URL)
 
@@ -153,8 +166,8 @@ def test_real_sdk_serialization_and_polling(sample):
 
 
 class FakeAgentic:
-    def __init__(self, sample=None, error=None):
-        self.sample, self.error, self.calls = sample, error, 0
+    def __init__(self, sample=None, error=None, variant="response_format"):
+        self.sample, self.error, self.calls, self.variant = sample, error, 0, variant
 
     def extract(self, url):
         from youtube_analyzer.gemini import CallResult
@@ -163,7 +176,10 @@ class FakeAgentic:
         self.calls += 1
         if self.error:
             raise self.error
-        return CallResult(content=ContentExtraction.model_validate(self.sample), usage=Usage(total_tokens=41000), model_version="gemini-3.8-flash")
+        return CallResult(
+            content=ContentExtraction.model_validate(self.sample), usage=Usage(total_tokens=41000),
+            model_version="gemini-3.8-flash", variant=self.variant,
+        )
 
 
 class FailStatic:
@@ -188,6 +204,11 @@ def test_pipeline_defaults_to_agentic(tmp_path, sample):
     assert r.analysis.video.duration_s == 900  # last segment end in the sample
     idx = json.loads((tmp_path / "index.jsonl").read_text())
     assert idx["engine"] == "agentic"
+
+
+def test_pipeline_records_prompt_json_variant(tmp_path, sample):
+    r = analyze(URL, tmp_path, agentic_extractor=FakeAgentic(sample, variant="prompt_json"), extractor=FailStatic(), metadata_fetcher=_meta)
+    assert r.analysis.run.engine == "agentic:prompt_json"
 
 
 def test_pipeline_falls_back_to_static(tmp_path, sample):

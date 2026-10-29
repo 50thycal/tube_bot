@@ -91,6 +91,8 @@ def analyze(
         try:
             res = ag.extract(canon)
             run.record(res)
+            if res.variant and res.variant != "response_format":
+                engine = f"agentic:{res.variant}"
             content = normalize_window(res.content, None)
             duration = duration or _last_segment_end([content])
         except ExtractionFailed as e:

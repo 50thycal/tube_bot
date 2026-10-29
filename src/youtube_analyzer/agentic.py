@@ -90,29 +90,62 @@ class AgenticExtractor:
         return self._client
 
     def extract(self, url: str) -> CallResult:
+        """Try schema-constrained output first, then schema-in-prompt.
+
+        First live run: agentic processing ran (processing_call/result steps) and
+        then the interaction ended "failed" with 0 tokens while response_format
+        was set; no public example combines agentic video with response_format.
+        Failed interactions are not billed, so the fallback costs nothing.
+        """
+        spent = Usage()
+        last: ExtractionFailed | None = None
+        for variant in ("response_format", "prompt_json"):
+            try:
+                res = self._run_once(url, structured=(variant == "response_format"))
+            except ExtractionFailed as e:
+                spent = spent.add(getattr(e, "usage", None) or Usage())
+                if getattr(e, "timed_out", False):
+                    raise
+                log.warning("agentic (%s) failed: %s", variant, e)
+                last = e
+                continue
+            res.usage = res.usage.add(spent)
+            res.variant = variant
+            return res
+        last.usage = spent
+        raise last
+
+    def _run_once(self, url: str, structured: bool) -> CallResult:
         t0 = self._clock()
+        schema = inline_json_schema(ContentExtraction)
+        text = prompt.full_prompt()
+        if not structured:
+            text += prompt.json_schema_instruction(schema)
         kwargs: dict[str, Any] = dict(
             model=self.model,
             input=[
                 {"type": "video", "uri": url, "processing": "agentic"},
-                {"type": "text", "text": prompt.full_prompt()},
+                {"type": "text", "text": text},
             ],
             system_instruction=prompt.SYSTEM_INSTRUCTION,
-            response_format={"type": "text", "mime_type": "application/json", "schema": inline_json_schema(ContentExtraction)},
-            response_mime_type="application/json",
             background=True,
             store=True,  # background interactions are retrieved by id
         )
+        if structured:
+            kwargs["response_format"] = {"type": "text", "mime_type": "application/json", "schema": schema}
+            kwargs["response_mime_type"] = "application/json"
         if self.thinking_level:
             kwargs["generation_config"] = {"thinking_level": self.thinking_level}
 
         interaction = self._retry("create", lambda: self.client.interactions.create(**kwargs))
         iid = interaction.id
-        log.info("agentic interaction %s: %s", iid, interaction.status)
+        log.info("agentic interaction %s (%s): %s", iid, "response_format" if structured else "prompt_json", interaction.status)
         while interaction.status in PENDING:
             if self._clock() - t0 > self.timeout_s:
                 self._cancel(iid)
-                raise ExtractionFailed(f"agentic interaction {iid} still {interaction.status} after {self.timeout_s:.0f}s")
+                err = ExtractionFailed(f"agentic interaction {iid} still {interaction.status} after {self.timeout_s:.0f}s")
+                err.timed_out = True
+                raise err
             self._sleep(self.poll_s)
             interaction = self._retry("get", lambda: self.client.interactions.get(id=iid))
 
@@ -127,13 +160,13 @@ class AgenticExtractor:
             err = ExtractionFailed(f"agentic interaction {iid} ended {interaction.status}: {errs or 'no error detail'}")
             err.usage = usage
             raise err
-        text = interaction.output_text or ""
-        if not text.strip():
+        out = interaction.output_text or ""
+        if not out.strip():
             err = ExtractionFailed(f"agentic interaction {iid} completed with no output")
             err.usage = usage
             raise err
         try:
-            content = ContentExtraction.model_validate_json(text)
+            content = ContentExtraction.model_validate_json(out if structured else _json_object(out))
         except ValidationError as e:
             err = ExtractionFailed(f"agentic output failed schema validation: {e}")
             err.usage = usage
@@ -168,6 +201,12 @@ class AgenticExtractor:
             self.client.interactions.cancel(id=iid)
         except Exception as e:  # best effort
             log.warning("could not cancel interaction %s: %s", iid, e)
+
+
+def _json_object(text: str) -> str:
+    """The outermost {...} of a free-text reply (tolerates ```json fences or prose)."""
+    start, end = text.find("{"), text.rfind("}")
+    return text[start : end + 1] if start != -1 and end > start else text
 
 
 def _usage(interaction: Any) -> Usage:
