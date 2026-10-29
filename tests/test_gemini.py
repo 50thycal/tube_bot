@@ -154,7 +154,7 @@ def test_daily_quota_fails_fast():
 
     msg = "You exceeded your current quota. Quota exceeded for metric: generate_content_free_tier_requests, limit: 20. quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier"
     ex, client = _ex([_err(errors.ClientError, 429, msg)] * 3)
-    with pytest.raises(QuotaExhausted, match="daily request quota"):
+    with pytest.raises(QuotaExhausted, match="daily quota exhausted.*GenerateRequestsPerDayPerProjectPerModel-FreeTier"):
         ex.extract(URL)
     assert len(client.models.calls) == 1
 

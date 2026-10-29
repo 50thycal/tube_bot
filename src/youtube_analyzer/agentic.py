@@ -1,6 +1,12 @@
-"""Agentic video understanding via the Gemini Interactions API.
+"""Whole-video extraction via the Gemini Interactions API, in the background.
 
-With `processing: "agentic"` the model navigates the video timeline itself
+Two processing modes share this code:
+- "static" (engine `interactions`): the usual frame/audio processing of the
+  whole video, but as a background job that is polled, so no HTTP request
+  is held open. Synchronous generate_content requests on YouTube URLs spend
+  ~250-300 s before the first byte (YouTube ingestion; a 3.5-min clip's first
+  chunk arrived after 285 s) and are dropped at ~255-320 s.
+- "agentic" (engine `agentic`): the model navigates the video timeline itself
 (transcript, frames, resolution on demand) instead of decoding every frame up
 front. One call covers the whole video, so there are no windows to merge.
 
@@ -69,8 +75,12 @@ class AgenticExtractor:
         max_retries: int = 5,
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.monotonic,
+        processing: str = "agentic",
+        low_res: bool = False,
     ):
         self.model = model
+        self.processing = processing
+        self.low_res = low_res
         self._client = client
         self.poll_s = poll_s
         self.timeout_s = timeout_s or float(os.environ.get("YTA_AGENTIC_TIMEOUT_S", 1800))
@@ -124,7 +134,7 @@ class AgenticExtractor:
         kwargs: dict[str, Any] = dict(
             model=self.model,
             input=[
-                {"type": "video", "uri": url, "processing": "agentic"},
+                self._video(url),
                 {"type": "text", "text": text},
             ],
             system_instruction=prompt.SYSTEM_INSTRUCTION,
@@ -139,7 +149,9 @@ class AgenticExtractor:
 
         interaction = self._retry("create", lambda: self.client.interactions.create(**kwargs))
         iid = interaction.id
-        log.info("agentic interaction %s (%s): %s", iid, "response_format" if structured else "prompt_json", interaction.status)
+        log.info(
+            "%s interaction %s (%s): %s", self.processing, iid, "response_format" if structured else "prompt_json", interaction.status
+        )
         while interaction.status in PENDING:
             if self._clock() - t0 > self.timeout_s:
                 self._cancel(iid)
@@ -174,6 +186,12 @@ class AgenticExtractor:
         return CallResult(content=content, usage=usage, model_version=str(interaction.model or self.model))
 
     # ---------------------------------------------------------------- internal
+
+    def _video(self, url: str) -> dict[str, Any]:
+        video: dict[str, Any] = {"type": "video", "uri": url, "processing": self.processing}
+        if self.low_res and self.processing == "static":
+            video["resolution"] = "low"
+        return video
 
     def _retry(self, what: str, fn: Callable[[], Any]) -> Any:
         attempt = 0

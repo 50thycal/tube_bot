@@ -25,6 +25,8 @@ log = logging.getLogger(__name__)
 # (7 min) or windows could never be split (a 5-min floor made 7-min windows unsplittable).
 MIN_WINDOW_S = 2 * 60
 
+ENGINES = ("static", "interactions", "agentic")
+
 
 def _env_int(name: str, default: int) -> int:
     v = os.environ.get(name)
@@ -82,26 +84,27 @@ def analyze(
     # Agentic is opt-in: on the first live video it failed 3/3 ("There was a problem
     # processing your request", 0 tokens) with and without response_format.
     engine = engine or os.environ.get("YTA_ENGINE") or "static"
-    if engine not in ("agentic", "static"):
-        raise ValueError(f"unknown engine {engine!r} (agentic|static)")
+    if engine not in ENGINES:
+        raise ValueError(f"unknown engine {engine!r} ({'|'.join(ENGINES)})")
     duration = meta.duration_s
     windows: list[Window] = []
     chunk = False
     content: ContentExtraction | None = None
 
-    if engine == "agentic":
-        # One call over the whole video; the model navigates the timeline itself.
-        ag = agentic_extractor or AgenticExtractor(model=model)
+    if engine in ("interactions", "agentic"):
+        # One background Interactions call over the whole video, polled until done.
+        processing = "static" if engine == "interactions" else "agentic"
+        ag = agentic_extractor or AgenticExtractor(model=model, processing=processing, low_res=low_res)
         try:
             res = ag.extract(canon)
             run.record(res)
             if res.variant and res.variant != "response_format":
-                engine = f"agentic:{res.variant}"
+                engine = f"{engine}:{res.variant}"
             content = normalize_window(res.content, None)
             duration = duration or _last_segment_end([content])
         except ExtractionFailed as e:
             run.record_failure(e)
-            log.warning("agentic extraction failed (%s); falling back to static windows", e)
+            log.warning("%s extraction failed (%s); falling back to static windows", engine, e)
             engine = "static"
 
     if content is None:

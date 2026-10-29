@@ -68,6 +68,15 @@ def test_agentic_request_and_polling(sample):
     assert res.usage.total_tokens == 41000 and res.usage.thinking_tokens == 3000
 
 
+def test_interactions_static_processing(sample):
+    client = NS(interactions=FakeInteractions([_interaction("completed", json.dumps(sample))]))
+    ex = AgenticExtractor(model="m", client=client, poll_s=0, sleep=lambda s: None, processing="static", low_res=True)
+    ex.extract(URL)
+    kw = client.interactions.created[0]
+    assert kw["input"][0] == {"type": "video", "uri": URL, "processing": "static", "resolution": "low"}
+    assert kw["background"] is True and "response_format" in kw
+
+
 def test_agentic_thinking_level(sample, monkeypatch):
     monkeypatch.setenv("YTA_THINKING_LEVEL", "low")
     ex, client = _ex([_interaction("completed", json.dumps(sample))])
@@ -133,7 +142,7 @@ def test_agentic_daily_quota_fails_fast():
     from youtube_analyzer.gemini import QuotaExhausted
 
     ex, client = _ex([], create_errors=[_HTTPErr(429, "Quota exceeded: GenerateRequestsPerDayPerProjectPerModel-FreeTier")] * 3)
-    with pytest.raises(QuotaExhausted, match="daily request quota"):
+    with pytest.raises(QuotaExhausted, match="daily quota exhausted"):
         ex.extract(URL)
     assert len(client.interactions.created) == 1
 
@@ -249,6 +258,16 @@ def test_engine_env_selects_agentic(tmp_path, sample, monkeypatch):
     monkeypatch.setenv("YTA_ENGINE", "agentic")
     r = analyze(URL, tmp_path, agentic_extractor=FakeAgentic(sample), extractor=FailStatic(), metadata_fetcher=_meta)
     assert r.analysis.run.engine == "agentic"
+
+
+def test_pipeline_interactions_engine(tmp_path, sample):
+    r = analyze(URL, tmp_path, engine="interactions", agentic_extractor=FakeAgentic(sample), extractor=FailStatic(), metadata_fetcher=_meta)
+    assert r.analysis.run.engine == "interactions" and not r.analysis.run.chunked
+
+
+def test_pipeline_unknown_engine(tmp_path):
+    with pytest.raises(ValueError, match="unknown engine"):
+        analyze(URL, tmp_path, engine="bogus", metadata_fetcher=_meta)
 
 
 def test_default_engine_is_static(tmp_path, sample):

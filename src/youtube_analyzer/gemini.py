@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import random
+import re
 import time
 from dataclasses import dataclass
 from typing import Callable, TypeVar
@@ -89,10 +90,12 @@ def daily_quota_error(e: Exception) -> QuotaExhausted | None:
     code = getattr(e, "code", None) or getattr(e, "status_code", None)
     msg = str(e)
     if code == 429 and ("PerDay" in msg or "per day" in msg.lower()):
+        ids = sorted(set(re.findall(r"quotaId'?\"?:\s*'?\"?([A-Za-z0-9_-]+)", msg)))
         return QuotaExhausted(
-            "Gemini daily request quota exhausted (free tier allows 20 generate requests/day/model; "
-            "failed requests count). Enable billing on the API key's project, or wait for the daily reset. "
-            f"Detail: {msg[:300]}"
+            "Gemini daily quota exhausted"
+            + (f" ({', '.join(ids)})" if ids else "")
+            + ". Free-tier quotas are per model (e.g. 20 generate requests/day; failed requests count): "
+            "try another model with --model, enable billing, or wait for the daily reset."
         )
     return None
 
