@@ -21,6 +21,12 @@ on:
         default: ""
   repository_dispatch:
     types: [analyze]
+  # Request queue: pushing a requests/*.txt file on a claude/** branch analyzes
+  # the URLs in it. Lets an agent that can push commits (but not dispatch
+  # workflows) queue a video. One request per line: <url> [--force] [--low-res]
+  push:
+    branches: ["claude/**"]
+    paths: ["requests/*.txt"]
 
 permissions:
   contents: write
@@ -33,9 +39,19 @@ concurrency:
 jobs:
   analyze:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
+      # Outputs always land on main, whatever triggered the run.
       - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Checkout request commit
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+        with:
+          path: .trigger
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -48,48 +64,90 @@ jobs:
       # Inputs are passed via env (never interpolated into the script) so a
       # crafted URL/payload cannot inject shell. The CLI also re-validates the
       # URL and only ever sends a canonical watch URL to Gemini.
+      - name: Collect requests
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          URL: ${{ github.event.inputs.url || github.event.client_payload.url }}
+          FORCE: ${{ github.event.inputs.force || github.event.client_payload.force }}
+          LOW_RES: ${{ github.event.inputs.low_res || github.event.client_payload.low_res }}
+        run: |
+          out="$RUNNER_TEMP/requests.txt"
+          : > "$out"
+          if [ "$EVENT" = "push" ]; then
+            cd .trigger
+            if git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+              files=$(git diff --name-only --diff-filter=AM "$BEFORE" HEAD -- 'requests/*.txt')
+            else
+              files=$(git ls-files 'requests/*.txt')
+            fi
+            for f in $files; do
+              grep -v '^\s*\(#.*\)\?$' "$f" >> "$out" || true
+            done
+          else
+            line="$URL"
+            [ "$FORCE" = "true" ] && line="$line --force"
+            [ "$LOW_RES" = "true" ] && line="$line --low-res"
+            echo "$line" > "$out"
+          fi
+          echo "requests:"; cat "$out"
+
       - name: Analyze
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           YTA_MODEL: ${{ inputs.model || vars.YTA_MODEL }}
-          URL: ${{ github.event.inputs.url || github.event.client_payload.url }}
-          FORCE: ${{ github.event.inputs.force || github.event.client_payload.force }}
-          LOW_RES: ${{ github.event.inputs.low_res || github.event.client_payload.low_res }}
         run: |
           if [ -z "$GEMINI_API_KEY" ]; then
             echo "::error::GEMINI_API_KEY secret is not set (Settings → Secrets and variables → Actions)"
             exit 1
           fi
-          if [ -z "$URL" ]; then
-            echo "::error::no url given (workflow input 'url' or client_payload.url)"
+          if [ ! -s "$RUNNER_TEMP/requests.txt" ]; then
+            echo "::error::no url given (workflow input 'url', client_payload.url, or a requests/ file)"
             exit 1
           fi
-          args=()
-          [ "$FORCE" = "true" ] && args+=(--force)
-          [ "$LOW_RES" = "true" ] && args+=(--low-res)
-          yta analyze "$URL" "${args[@]}" | tee "$RUNNER_TEMP/yta.out"
-          {
-            echo "### yta analyze"
-            echo '```'
+          failed=0
+          echo "### yta analyze" >> "$GITHUB_STEP_SUMMARY"
+          while read -r url rest; do
+            [ -z "$url" ] && continue
+            args=()
+            for flag in $rest; do
+              case "$flag" in
+                --force|--low-res) args+=("$flag") ;;
+                *) echo "::warning::ignoring unknown flag '$flag'" ;;
+              esac
+            done
+            echo "::group::$url ${args[*]}"
+            if yta analyze "$url" "${args[@]}" < /dev/null > "$RUNNER_TEMP/yta.out" 2>&1; then status=ok; else status=FAILED; failed=1; fi
             cat "$RUNNER_TEMP/yta.out"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+            echo "::endgroup::"
+            {
+              echo "**$status** \`$url\`"
+              echo '```'
+              tail -n 20 "$RUNNER_TEMP/yta.out"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          done < "$RUNNER_TEMP/requests.txt"
+          echo "failed=$failed" >> "$GITHUB_ENV"
 
       - name: Commit outputs
-        env:
-          URL: ${{ github.event.inputs.url || github.event.client_payload.url }}
         run: |
           git add videos index.jsonl 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "nothing to commit (already analyzed?)"
-            exit 0
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            added=$(git diff --cached --name-only --diff-filter=A -- videos | cut -d/ -f2 | sort -u | tr '\n' ' ')
+            git commit -m "analyze: ${added:-update}"
+            ok=0
+            for i in 1 2 3 4; do
+              if git push; then ok=1; break; fi
+              git pull --rebase
+              sleep $((2 ** i))
+            done
+            [ "$ok" = 1 ] || exit 1
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "analyze: $(git diff --cached --name-only --diff-filter=A -- videos | head -1 | cut -d/ -f2)" -m "source: $URL"
-          for i in 1 2 3 4; do
-            git push && exit 0
-            git pull --rebase
-            sleep $((2 ** i))
-          done
-          exit 1
+          if [ "${failed:-0}" = 1 ]; then
+            echo "::error::one or more analyses failed (see step summary)"
+            exit 1
+          fi

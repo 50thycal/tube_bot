@@ -90,6 +90,8 @@ Triggers (both only work once the workflow is on the default branch):
 
   `client_payload` also accepts `"force": "true"` and `"low_res": "true"`.
 
+- **push to `requests/*.txt` on a `claude/**` branch**: each line `<url> [--force] [--low-res]` is analyzed and the outputs are committed to `main`. This is the request queue used from a Claude Code chat: the Claude GitHub App can push commits but cannot dispatch workflows. See `requests/README.md`.
+
 `ci.yml` runs `pytest` on pushes to main and on PRs.
 
 ### iOS Shortcut (share sheet → analyze)
