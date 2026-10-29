@@ -60,6 +60,17 @@ def full_prompt() -> str:
     return _FULL_TASK
 
 
+def json_schema_instruction(schema: dict) -> str:
+    """For calls that cannot use a response schema: put the schema in the prompt."""
+    import json
+
+    return (
+        "\nReturn ONLY one JSON object, with no markdown fences or commentary, that "
+        "conforms exactly to this JSON Schema (every property is required; use empty "
+        "strings or empty lists where a field does not apply):\n" + json.dumps(schema, separators=(",", ":"))
+    )
+
+
 def window_prompt(start_s: int, end_s: int, index: int, total: int | None) -> str:
     of = f"of {total} " if total else ""
     return (

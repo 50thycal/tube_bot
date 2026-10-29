@@ -23,7 +23,8 @@ on:
     types: [analyze]
   # Request queue: pushing a requests/*.txt file on a claude/** branch analyzes
   # the URLs in it. Lets an agent that can push commits (but not dispatch
-  # workflows) queue a video. One request per line: <url> [--force] [--low-res]
+  # workflows) queue a video. One request per line:
+  #   <url> [--force] [--low-res] [--engine=agentic|--engine=static]
   push:
     branches: ["claude/**"]
     paths: ["requests/*.txt"]
@@ -116,7 +117,7 @@ jobs:
             args=()
             for flag in $rest; do
               case "$flag" in
-                --force|--low-res) args+=("$flag") ;;
+                --force|--low-res|--engine=agentic|--engine=static) args+=("$flag") ;;
                 *) echo "::warning::ignoring unknown flag '$flag'" ;;
               esac
             done

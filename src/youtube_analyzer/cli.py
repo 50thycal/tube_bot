@@ -27,7 +27,13 @@ def _build_parser() -> argparse.ArgumentParser:
     a.add_argument("url")
     a.add_argument("--force", action="store_true", help="re-analyze even if already in index")
     a.add_argument("--model", help="Gemini model id (default: $YTA_MODEL or built-in default)")
-    a.add_argument("--low-res", action="store_true", help="low media resolution (~3x fewer video tokens)")
+    a.add_argument("--low-res", action="store_true", help="low media resolution (static engine; ~3x fewer video tokens)")
+    a.add_argument(
+        "--engine",
+        choices=["agentic", "static"],
+        help="agentic: one Interactions API call, model navigates the video (default, falls back to static); "
+        "static: generate_content over clipped windows (default: $YTA_ENGINE or agentic)",
+    )
     a.add_argument("--root", default=".", help="output root containing videos/ and index.jsonl (default: .)")
 
     r = sub.add_parser("render", help="re-render digest.md from a raw.json (no API call)")
@@ -55,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
     from .pipeline import analyze
 
     try:
-        res = analyze(args.url, args.root, force=args.force, model=args.model, low_res=args.low_res)
+        res = analyze(args.url, args.root, force=args.force, model=args.model, low_res=args.low_res, engine=args.engine)
     except InvalidYouTubeURL as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -73,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
     u = a.run.usage
     print(f"created: {res.path}")
     print(
-        f"model={a.run.model} version={a.run.model_version or '?'} calls={a.run.calls} "
+        f"engine={a.run.engine} model={a.run.model} version={a.run.model_version or '?'} calls={a.run.calls} "
         f"chunked={a.run.chunked} tokens: prompt={u.prompt_tokens} output={u.output_tokens} "
         f"thinking={u.thinking_tokens} total={u.total_tokens}"
     )

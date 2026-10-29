@@ -19,15 +19,18 @@ pytest
 |---|---|---|
 | `GEMINI_API_KEY` | required | Gemini API key (`.env` locally, repo secret in Actions) |
 | `YTA_MODEL` | `gemini-3.8-flash` | Gemini model id. The default is the current Flash model in Google's video-understanding docs and cookbook. |
-| `YTA_CHUNK_MINUTES` | `10` | window size for long videos |
-| `YTA_SINGLE_PASS_MAX_MINUTES` | `10` | videos of known length up to this get a single request |
-| `YTA_MAX_WINDOWS` | `16` | cap on windows when the length is unknown (16 × 10 min = 2 h 40 min) |
+| `YTA_ENGINE` | `agentic` | `agentic` (Interactions API, one call, falls back to static) or `static` (generate_content windows) |
+| `YTA_THINKING_LEVEL` | model default | agentic engine: `minimal`/`low`/`medium`/`high` |
+| `YTA_AGENTIC_TIMEOUT_S` | `1800` | give up (and cancel) a background interaction after this long |
+| `YTA_CHUNK_MINUTES` | `15` | static engine: window size for long videos |
+| `YTA_SINGLE_PASS_MAX_MINUTES` | `15` | static engine: videos of known length up to this get a single request |
+| `YTA_MAX_WINDOWS` | `16` | static engine: cap on windows when the length is unknown (16 × 15 min = 4 h) |
 | `YTA_MAX_OUTPUT_TOKENS` | model max | cap on output tokens |
 
 ## CLI
 
 ```bash
-yta analyze <url> [--force] [--model X] [--low-res] [--root DIR]
+yta analyze <url> [--force] [--model X] [--engine agentic|static] [--low-res] [--root DIR]
 yta render videos/<dir>/raw.json      # re-render digest.md, no API call
 ```
 
@@ -62,18 +65,24 @@ Each `index.jsonl` line has these fields: `id, url, title, channel, date, path, 
 
 Timestamps are absolute `HH:MM:SS`. Values on visuals are transcribed exactly as shown. Anything unreadable is written as `UNREADABLE` with low confidence, and values are never estimated.
 
-## How long videos are handled
+## Engines
 
-Every request covers at most about one window of video. The server drops any request still processing after roughly 255–270 s. That has hit whole videos, even a low-res duration probe, and a 15-minute window took ~255 s, so windows default to 10 minutes.
+**`agentic` (default).** One [Interactions API](https://ai.google.dev/gemini-api/docs/video-understanding) call with the YouTube URL and `processing: "agentic"`. The model navigates the timeline itself, loading the transcript and frames on demand, instead of decoding every frame up front. One call covers the whole video, so there are no windows to merge and no cross-window duplicates. The call runs with `background=True` and is polled, so no HTTP request is held open while the server works. Output is constrained by the same JSON schema (`response_format`). If the interaction fails, the run falls back to `static`. A private or unavailable video fails immediately.
+
+**`static`.** `generate_content` with the URL as a `file_data` part, clipped into windows with `video_metadata` offsets. Synchronous requests on YouTube URLs were seen to be dropped after roughly 255–270 s, largely independent of clip length. 5-minute clips took 132–255 s, a 15-minute clip ~255 s, and 10-minute clips were dropped. Whole-video requests, even a low-res duration probe, were dropped too.
+
+This design follows what similar tools do. [tubetell](https://github.com/chhib/tubetell) uses agentic mode for long videos, and its static spans run sequentially and retry dropped connections before anything else. [video-intel](https://github.com/dzivkovi/video-intel) chunks long videos into windows and reports that YouTube offset clipping is unreliable on 3.x models.
+
+### Static engine: long videos
 
 1. Duration comes from the watch page when YouTube serves it. On CI runners it usually serves a bot check instead.
-2. **Known length ≤ `YTA_SINGLE_PASS_MAX_MINUTES` (10):** one request. If it fails on input length, the output is truncated (`MAX_TOKENS`), the server returns 504, or the connection drops, the run falls back to windows.
-3. **Known length > 10 minutes:** planned ~10-minute windows.
+2. **Known length ≤ `YTA_SINGLE_PASS_MAX_MINUTES` (15):** one request. If it fails on input length, the output is truncated (`MAX_TOKENS`), the server returns 504, or the connection drops, the run falls back to windows.
+3. **Known length > 15 minutes:** planned ~15-minute windows.
 4. **Unknown length:** the video is never sent whole. Windows are walked from 0:00. Each clip response carries `clip_has_video` and `video_ended_in_clip`, and the walk stops when the video ends, when a clip is empty or past the end, or after `YTA_MAX_WINDOWS`.
-5. Windows use `video_metadata` start/end offsets, with one streamed structured extraction per window. A window that is still too heavy is split in half, down to 5 minutes. Each call's duration and token count are logged.
+5. Windows use `video_metadata` start/end offsets, with one streamed structured extraction per window. A dropped connection is retried once on the same window. A window that is still too heavy is split in half, down to 5 minutes. Each call's duration and token count are logged.
 6. The windows are merged. Timestamps stay absolute: if the model reported clip-relative times, they are detected and shifted. Lists are concatenated in time order, strategies and tools are deduplicated by name, and the summary is the per-window summaries labelled by window (deterministic, no extra LLM call).
 
-Retries: HTTP 408/429/500/502/503 get exponential backoff with jitter, up to 5 retries. A 504 or a dropped connection is treated as "too heavy" and retried as smaller windows instead. Private, age-gated and removed videos fail with a clear error, raised from oEmbed, the watch page's `playabilityStatus`, or Gemini's own error.
+Retries: HTTP 408/429/500/502/503 get exponential backoff with jitter, up to 5 retries. In the static engine, a dropped connection is retried once, then it and a 504 are treated as "too heavy" and retried as smaller windows. Private, age-gated and removed videos fail with a clear error, raised from oEmbed, the watch page's `playabilityStatus`, or Gemini's own error.
 
 ## GitHub Action
 
@@ -132,7 +141,8 @@ src/youtube_analyzer/
   metadata.py    oEmbed title/channel, watch-page duration/playability
   prompt.py      system + task prompts (security note lives here)
   schema.py      Pydantic schema (versioned)
-  gemini.py      Gemini calls, structured output, retries, error mapping
+  agentic.py     agentic engine: Interactions API, background + polling
+  gemini.py      static engine: generate_content, structured output, retries, error mapping
   merge.py       window planning, timestamp normalization, merge
   digest.py      raw.json → digest.md
   store.py       videos/ layout, index.jsonl, dedupe
