@@ -76,11 +76,12 @@ def analyze(
     ex = extractor or GeminiExtractor(model=model, low_res=low_res)
     run = _Run()
 
-    # Every request is kept to roughly one window of video. Observed: whole-video
-    # requests (even a low-res duration probe) were dropped by the server after
-    # ~4.5 min, so a video of unknown length is never sent whole.
-    window_s = _env_int("YTA_CHUNK_MINUTES", 15) * 60
-    max_single_s = _env_int("YTA_SINGLE_PASS_MAX_MINUTES", 20) * 60
+    # Every request is kept to roughly one window of video. Observed: the server
+    # drops any request still processing after ~255-270 s (whole videos, even a
+    # low-res duration probe; a 15-min window took ~255 s), so a video of unknown
+    # length is never sent whole and windows default to 10 min.
+    window_s = _env_int("YTA_CHUNK_MINUTES", 10) * 60
+    max_single_s = _env_int("YTA_SINGLE_PASS_MAX_MINUTES", 10) * 60
     max_windows = _env_int("YTA_MAX_WINDOWS", 16)
     duration = meta.duration_s
 
@@ -109,6 +110,8 @@ def analyze(
             parts = _walk_windows(ex, canon, window_s, max_windows, run)
             ends = [parse_ts(s.end_ts) for _, c in parts for s in c.segments]
             duration = max((e for e in ends if e is not None), default=None)
+            if duration:  # trim the last window to where the video actually ends
+                parts = [(Window(start_s=w.start_s, end_s=min(w.end_s, max(duration, w.start_s + 1))), c) for w, c in parts]
         if not parts:
             raise ExtractionFailed("no window returned any video content")
         windows = [w for w, _ in parts]

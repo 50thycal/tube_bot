@@ -57,8 +57,31 @@ def _meta(duration=None):
 
 @pytest.fixture(autouse=True)
 def _env(monkeypatch):
-    for k in ("YTA_MODEL", "YTA_CHUNK_MINUTES", "YTA_SINGLE_PASS_MAX_MINUTES", "YTA_MAX_WINDOWS"):
+    for k in ("YTA_MODEL", "YTA_MAX_WINDOWS"):
         monkeypatch.delenv(k, raising=False)
+    # Tests below are written against these sizes; defaults are checked separately.
+    monkeypatch.setenv("YTA_CHUNK_MINUTES", "15")
+    monkeypatch.setenv("YTA_SINGLE_PASS_MAX_MINUTES", "20")
+
+
+def test_default_window_sizes(tmp_path, sample, monkeypatch):
+    monkeypatch.delenv("YTA_CHUNK_MINUTES")
+    monkeypatch.delenv("YTA_SINGLE_PASS_MAX_MINUTES")
+    ex = FakeExtractor(sample, duration=600)
+    analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(600), now=NOW)
+    assert ex.calls[0][2] is None  # <= 10 min: single pass
+    ex = FakeExtractor(sample, duration=1500)
+    r = analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(None), now=NOW, force=True)
+    assert [c[2].start_s for c in ex.calls] == [0, 600, 1200]  # 10-min windows, stops when the video ends
+
+
+def test_last_walked_window_trimmed_to_video_end(tmp_path, sample):
+    sample["segments"][-1]["end_ts"] = "00:02:10"  # clip-relative: video ends 2:10 into the last window
+    ex = FakeExtractor(sample, duration=1030)
+    r = analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(None), now=NOW)
+    assert [(w.start_s, w.end_s) for w in r.analysis.run.windows] == [(0, 900), (900, 1030)]
+    assert r.analysis.video.duration_s == 1030
+    assert "[00:15:00–00:17:10]" in r.analysis.summary
 
 
 def test_single_pass(tmp_path, sample):
