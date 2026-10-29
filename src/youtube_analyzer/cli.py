@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from . import __version__
 from .digest import render
-from .gemini import ExtractionFailed, TooLong
+from .gemini import ExtractionFailed, QuotaExhausted, TooLong
 from .metadata import VideoUnavailable
 from .store import load_analysis
 from .urls import InvalidYouTubeURL
@@ -31,8 +31,9 @@ def _build_parser() -> argparse.ArgumentParser:
     a.add_argument(
         "--engine",
         choices=["agentic", "static"],
-        help="agentic: one Interactions API call, model navigates the video (default, falls back to static); "
-        "static: generate_content over clipped windows (default: $YTA_ENGINE or agentic)",
+        help="static: generate_content over clipped windows (default); "
+        "agentic: one Interactions API call, model navigates the video (experimental, falls back to static) "
+        "(default: $YTA_ENGINE or static)",
     )
     a.add_argument("--root", default=".", help="output root containing videos/ and index.jsonl (default: .)")
 
@@ -68,6 +69,9 @@ def main(argv: list[str] | None = None) -> int:
     except VideoUnavailable as e:
         print(f"error: video unavailable: {e}", file=sys.stderr)
         return 3
+    except QuotaExhausted as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 5
     except (TooLong, ExtractionFailed) as e:
         print(f"error: extraction failed: {e}", file=sys.stderr)
         return 4

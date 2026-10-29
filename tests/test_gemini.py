@@ -117,16 +117,32 @@ def test_deadline_exceeded_is_too_long_without_retry():
     assert len(client.models.calls) == 1
 
 
-def test_dropped_connection_retried_once_then_too_long():
-    drop = httpx.RemoteProtocolError("Server disconnected without sending a response.")
-    ex, client = _ex([drop, drop])
+def test_dropped_connection_is_too_long_by_default(monkeypatch):
+    monkeypatch.delenv("YTA_DROP_RETRIES", raising=False)
+    ex, client = _ex([httpx.RemoteProtocolError("Server disconnected without sending a response.")])
     with pytest.raises(TooLong, match="RemoteProtocolError"):
         ex.extract(URL)
+    assert len(client.models.calls) == 1  # split, don't re-send the same size
+
+
+def test_dropped_connection_retry_when_enabled(sample):
+    ex, client = _ex([httpx.RemoteProtocolError("dropped"), _resp(sample)], drop_retries=1)
+    assert ex.extract(URL).content.summary
     assert len(client.models.calls) == 2
 
 
-def test_dropped_connection_retry_succeeds(sample):
-    ex, client = _ex([httpx.RemoteProtocolError("dropped"), _resp(sample)])
+def test_daily_quota_fails_fast():
+    from youtube_analyzer.gemini import QuotaExhausted
+
+    msg = "You exceeded your current quota. Quota exceeded for metric: generate_content_free_tier_requests, limit: 20. quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+    ex, client = _ex([_err(errors.ClientError, 429, msg)] * 3)
+    with pytest.raises(QuotaExhausted, match="daily request quota"):
+        ex.extract(URL)
+    assert len(client.models.calls) == 1
+
+
+def test_per_minute_429_still_retried(sample):
+    ex, client = _ex([_err(errors.ClientError, 429, "Resource exhausted (requests per minute)"), _resp(sample)])
     assert ex.extract(URL).content.summary
     assert len(client.models.calls) == 2
 
