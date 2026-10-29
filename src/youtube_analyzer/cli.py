@@ -30,10 +30,11 @@ def _build_parser() -> argparse.ArgumentParser:
     a.add_argument("--low-res", action="store_true", help="low media resolution (static engine; ~3x fewer video tokens)")
     a.add_argument(
         "--engine",
-        choices=["agentic", "static"],
-        help="static: generate_content over clipped windows (default); "
-        "agentic: one Interactions API call, model navigates the video (experimental, falls back to static) "
-        "(default: $YTA_ENGINE or static)",
+        choices=["static", "interactions", "agentic"],
+        help="interactions (default): one background Interactions API job over the whole video, polled, "
+        "falls back to static; static: generate_content over clipped windows; "
+        "agentic: like interactions but the model navigates the video (experimental) "
+        "(default: $YTA_ENGINE or interactions)",
     )
     a.add_argument("--root", default=".", help="output root containing videos/ and index.jsonl (default: .)")
 

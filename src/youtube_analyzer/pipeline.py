@@ -21,7 +21,11 @@ from .urls import normalize
 
 log = logging.getLogger(__name__)
 
-MIN_WINDOW_S = 5 * 60
+# Floor for halving a dropped window. Must be well under the default window
+# (7 min) or windows could never be split (a 5-min floor made 7-min windows unsplittable).
+MIN_WINDOW_S = 2 * 60
+
+ENGINES = ("static", "interactions", "agentic")
 
 
 def _env_int(name: str, default: int) -> int:
@@ -77,29 +81,31 @@ def analyze(
     meta = metadata_fetcher(canon)
     model = resolve_model(model)
     run = _Run()
-    # Agentic is opt-in: on the first live video it failed 3/3 ("There was a problem
-    # processing your request", 0 tokens) with and without response_format.
-    engine = engine or os.environ.get("YTA_ENGINE") or "static"
-    if engine not in ("agentic", "static"):
-        raise ValueError(f"unknown engine {engine!r} (agentic|static)")
+    # Default: one background Interactions job (live: 17-min video in one call,
+    # ~1.5 min wall clock, no drops). Agentic is opt-in: it failed 3/3 on the
+    # first live video ("There was a problem processing your request", 0 tokens).
+    engine = engine or os.environ.get("YTA_ENGINE") or "interactions"
+    if engine not in ENGINES:
+        raise ValueError(f"unknown engine {engine!r} ({'|'.join(ENGINES)})")
     duration = meta.duration_s
     windows: list[Window] = []
     chunk = False
     content: ContentExtraction | None = None
 
-    if engine == "agentic":
-        # One call over the whole video; the model navigates the timeline itself.
-        ag = agentic_extractor or AgenticExtractor(model=model)
+    if engine in ("interactions", "agentic"):
+        # One background Interactions call over the whole video, polled until done.
+        processing = "static" if engine == "interactions" else "agentic"
+        ag = agentic_extractor or AgenticExtractor(model=model, processing=processing, low_res=low_res)
         try:
             res = ag.extract(canon)
             run.record(res)
             if res.variant and res.variant != "response_format":
-                engine = f"agentic:{res.variant}"
+                engine = f"{engine}:{res.variant}"
             content = normalize_window(res.content, None)
             duration = duration or _last_segment_end([content])
         except ExtractionFailed as e:
             run.record_failure(e)
-            log.warning("agentic extraction failed (%s); falling back to static windows", e)
+            log.warning("%s extraction failed (%s); falling back to static windows", engine, e)
             engine = "static"
 
     if content is None:

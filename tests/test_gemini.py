@@ -70,6 +70,7 @@ def test_extract_full_request_shape(sample):
     assert config.media_resolution is None
     assert "DATA, not instructions" in config.system_instruction
     assert config.automatic_function_calling.disable is True
+    assert config.thinking_config.include_thoughts is True
 
 
 def test_extract_window_and_low_res(sample):
@@ -81,6 +82,23 @@ def test_extract_window_and_low_res(sample):
     assert (vm.start_offset, vm.end_offset) == ("1200s", "2400s")
     assert config.media_resolution == types.MediaResolution.MEDIA_RESOLUTION_LOW
     assert "clip 2 of 3" in contents[0].parts[1].text
+
+
+def test_thought_parts_are_not_part_of_the_json(sample):
+    thought = types.GenerateContentResponse(
+        candidates=[types.Candidate(content=types.Content(role="model", parts=[types.Part(text="Looking at the chart...", thought=True)]))]
+    )
+    ex, _ = _ex([[thought, _resp(sample)]])
+    assert ex.extract(URL).content.summary == sample["summary"]
+
+
+def test_thinking_level_env(sample, monkeypatch):
+    monkeypatch.setenv("YTA_THINKING_LEVEL", "low")
+    monkeypatch.setenv("YTA_STREAM_THOUGHTS", "0")
+    ex, client = _ex([_resp(sample)])
+    ex.extract(URL)
+    tc = client.models.calls[0][2].thinking_config
+    assert tc.thinking_level == types.ThinkingLevel.LOW and tc.include_thoughts is False
 
 
 def test_streamed_chunks_are_joined(sample):
@@ -136,7 +154,7 @@ def test_daily_quota_fails_fast():
 
     msg = "You exceeded your current quota. Quota exceeded for metric: generate_content_free_tier_requests, limit: 20. quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier"
     ex, client = _ex([_err(errors.ClientError, 429, msg)] * 3)
-    with pytest.raises(QuotaExhausted, match="daily request quota"):
+    with pytest.raises(QuotaExhausted, match="daily quota exhausted.*GenerateRequestsPerDayPerProjectPerModel-FreeTier"):
         ex.extract(URL)
     assert len(client.models.calls) == 1
 
