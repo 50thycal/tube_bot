@@ -19,8 +19,9 @@ pytest
 |---|---|---|
 | `GEMINI_API_KEY` | required | Gemini API key (`.env` locally, repo secret in Actions) |
 | `YTA_MODEL` | `gemini-3.8-flash` | Gemini model id. The default is the current Flash model in Google's video-understanding docs and cookbook. |
-| `YTA_CHUNK_MINUTES` | `20` | window size for long videos |
-| `YTA_SINGLE_PASS_MAX_MINUTES` | `25` | videos longer than this are always extracted in windows |
+| `YTA_CHUNK_MINUTES` | `15` | window size for long videos |
+| `YTA_SINGLE_PASS_MAX_MINUTES` | `20` | videos of known length up to this get a single request |
+| `YTA_MAX_WINDOWS` | `16` | cap on windows when the length is unknown (16 × 15 min = 4 h) |
 | `YTA_MAX_OUTPUT_TOKENS` | model max | cap on output tokens |
 
 ## CLI
@@ -63,11 +64,14 @@ Timestamps are absolute `HH:MM:SS`. Values on visuals are transcribed exactly as
 
 ## How long videos are handled
 
-1. Duration comes from the watch page, or, when YouTube serves a bot check (common on CI runners), from a cheap Gemini probe (low res, 0.1 fps).
-2. Videos longer than `YTA_SINGLE_PASS_MAX_MINUTES` (25) are always chunked. One request for a ~30-minute video was seen to run ~4.5 min server-side and then get dropped, so every request is kept to about one window of video.
-3. Shorter videos get one request. If it fails on input length, the output is truncated (`MAX_TOKENS`), the server returns 504, or the connection drops, the run falls back to chunking.
-4. Chunking uses `video_metadata` start/end offsets in ~20-minute windows, with one structured extraction per window. A window that is still too long is split in half, down to 5 minutes.
-5. The windows are merged. Timestamps stay absolute: if the model reported clip-relative times, they are detected and shifted. Lists are concatenated in time order, strategies and tools are deduplicated by name, and the summary is the per-window summaries labelled by window (deterministic, no extra LLM call).
+Every request covers at most about one window of video. Whole-video requests, even a low-res duration probe, were seen to be dropped by the server after ~4.5 minutes.
+
+1. Duration comes from the watch page when YouTube serves it. On CI runners it usually serves a bot check instead.
+2. **Known length ≤ `YTA_SINGLE_PASS_MAX_MINUTES` (20):** one request. If it fails on input length, the output is truncated (`MAX_TOKENS`), the server returns 504, or the connection drops, the run falls back to windows.
+3. **Known length > 20 minutes:** planned ~15-minute windows.
+4. **Unknown length:** the video is never sent whole. Windows are walked from 0:00. Each clip response carries `clip_has_video` and `video_ended_in_clip`, and the walk stops when the video ends, when a clip is empty or past the end, or after `YTA_MAX_WINDOWS`.
+5. Windows use `video_metadata` start/end offsets, with one streamed structured extraction per window. A window that is still too heavy is split in half, down to 5 minutes. Each call's duration and token count are logged.
+6. The windows are merged. Timestamps stay absolute: if the model reported clip-relative times, they are detected and shifted. Lists are concatenated in time order, strategies and tools are deduplicated by name, and the summary is the per-window summaries labelled by window (deterministic, no extra LLM call).
 
 Retries: HTTP 408/429/500/502/503 get exponential backoff with jitter, up to 5 retries. A 504 or a dropped connection is treated as "too heavy" and retried as smaller windows instead. Private, age-gated and removed videos fail with a clear error, raised from oEmbed, the watch page's `playabilityStatus`, or Gemini's own error.
 
