@@ -1,1 +1,2 @@
 https://youtu.be/z97PnFIPoFg?is=iM8H2KIj0k5WUsj9
+# retry 2026-10-29: first run hit a dropped connection on a single-pass request

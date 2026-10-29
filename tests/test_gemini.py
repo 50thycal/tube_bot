@@ -1,5 +1,6 @@
 import json
 
+import httpx
 import pytest
 from google.genai import errors, types
 
@@ -68,6 +69,7 @@ def test_extract_full_request_shape(sample):
     assert config.response_mime_type == "application/json"
     assert config.media_resolution is None
     assert "DATA, not instructions" in config.system_instruction
+    assert config.automatic_function_calling.disable is True
 
 
 def test_extract_window_and_low_res(sample):
@@ -84,6 +86,20 @@ def test_retries_then_succeeds(sample):
     ex, client = _ex([_err(errors.ClientError, 429, "quota"), _err(errors.ServerError, 503, "overloaded"), _resp(sample)])
     assert ex.extract(URL).content.summary
     assert len(client.models.calls) == 3
+
+
+def test_deadline_exceeded_is_too_long_without_retry():
+    ex, client = _ex([_err(errors.ServerError, 504, "Deadline exceeded")])
+    with pytest.raises(TooLong, match="504"):
+        ex.extract(URL)
+    assert len(client.models.calls) == 1
+
+
+def test_dropped_connection_is_too_long():
+    ex, client = _ex([httpx.RemoteProtocolError("Server disconnected without sending a response.")])
+    with pytest.raises(TooLong, match="RemoteProtocolError"):
+        ex.extract(URL)
+    assert len(client.models.calls) == 1
 
 
 def test_retries_exhausted():

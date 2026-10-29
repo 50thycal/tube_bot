@@ -58,8 +58,12 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      # Push-triggered runs use the pushed commit's code (as they already use its
+      # copy of this workflow), so a fix can be exercised before it is merged.
       - name: Install
-        run: pip install .
+        env:
+          SRC: ${{ github.event_name == 'push' && './.trigger' || '.' }}
+        run: pip install "$SRC"
 
       # Inputs are passed via env (never interpolated into the script) so a
       # crafted URL/payload cannot inject shell. The CLI also re-validates the

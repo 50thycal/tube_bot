@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Callable
 
 from . import __version__
-from .gemini import CallResult, GeminiExtractor, TooLong, resolve_model
+from .gemini import CallResult, ExtractionFailed, GeminiExtractor, TooLong, resolve_model
 from .merge import merge, normalize_window, plan_windows
 from .metadata import Metadata, fetch_metadata
 from .schema import ContentExtraction, RunInfo, Usage, VideoAnalysis, VideoInfo, Window
@@ -19,9 +19,6 @@ from .urls import normalize
 
 log = logging.getLogger(__name__)
 
-# Approximate video tokens per second (frames + audio) by media resolution.
-TOKENS_PER_S_DEFAULT = 300
-TOKENS_PER_S_LOW = 100
 MIN_WINDOW_S = 5 * 60
 
 
@@ -78,16 +75,27 @@ def analyze(
     ex = extractor or GeminiExtractor(model=model, low_res=low_res)
     run = _Run()
 
+    # Every request is kept to roughly one window of video: a ~30 min video sent
+    # whole has been seen to run ~4.5 min server-side and then get dropped.
     window_s = _env_int("YTA_CHUNK_MINUTES", 20) * 60
-    budget = _env_int("YTA_SINGLE_PASS_TOKEN_BUDGET", 600_000)
-    rate = TOKENS_PER_S_LOW if low_res else TOKENS_PER_S_DEFAULT
+    max_single_s = _env_int("YTA_SINGLE_PASS_MAX_MINUTES", 25) * 60
     duration = meta.duration_s
+    if not duration:
+        # The watch page is often a bot check on CI runners; ask Gemini instead (cheap: low res, 0.1 fps).
+        try:
+            probe = ex.probe_duration(canon)
+            run.record(probe)
+            duration = probe.content.duration_s if probe.content.duration_s > 0 else None
+            log.info("probed duration: %ss", duration)
+        except TooLong as e:
+            run.record_failure(e)
+            log.warning("duration probe failed (%s); trying a single pass", e)
 
     windows: list[Window] = []
     content: ContentExtraction | None = None
-    chunk = bool(duration and duration * rate > budget)
+    chunk = bool(duration and duration > max_single_s)
     if chunk:
-        log.info("~%d est. tokens > budget %d; chunking up front", duration * rate, budget)
+        log.info("duration %ss > %ss; extracting in %d-min windows", duration, max_single_s, window_s // 60)
     else:
         try:
             res = ex.extract(canon)
@@ -95,15 +103,12 @@ def analyze(
             content = normalize_window(res.content, None)
         except TooLong as e:
             run.record_failure(e)
+            if not duration:
+                raise ExtractionFailed(f"single pass failed ({e}) and video duration is unknown, so it cannot be chunked") from e
             log.warning("single pass too long (%s); falling back to %d-min windows", e, window_s // 60)
             chunk = True
 
     if chunk:
-        if not duration:
-            probe = ex.probe_duration(canon)
-            run.record(probe)
-            duration = probe.content.duration_s
-            log.info("probed duration: %ss", duration)
         parts: list[tuple[Window, ContentExtraction]] = []
         planned = plan_windows(duration, window_s)
         for i, w in enumerate(planned):

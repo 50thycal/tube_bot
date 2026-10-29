@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pytest
 
 from youtube_analyzer import cli
-from youtube_analyzer.gemini import CallResult, TooLong
+from youtube_analyzer.gemini import CallResult, ExtractionFailed, TooLong
 from youtube_analyzer.metadata import Metadata
 from youtube_analyzer.pipeline import analyze
 from youtube_analyzer.schema import ContentExtraction, DurationProbe, Usage
@@ -17,10 +17,11 @@ NOW = lambda: datetime(2026, 10, 29, 12, 0, tzinfo=timezone.utc)  # noqa: E731
 class FakeExtractor:
     """Stands in for GeminiExtractor. `too_long` decides which calls raise TooLong."""
 
-    def __init__(self, sample, too_long=lambda window: False, duration=3000):
+    def __init__(self, sample, too_long=lambda window: False, duration=3000, probe_fails=False):
         self.sample = sample
         self.too_long = too_long
         self.duration = duration
+        self.probe_fails = probe_fails
         self.calls = []
 
     def _usage(self):
@@ -36,6 +37,8 @@ class FakeExtractor:
 
     def probe_duration(self, url):
         self.calls.append(("probe", url, None))
+        if self.probe_fails:
+            raise TooLong("dropped")
         return CallResult(content=DurationProbe(duration_s=self.duration), usage=self._usage(), model_version="v-001")
 
 
@@ -45,7 +48,7 @@ def _meta(duration=None):
 
 @pytest.fixture(autouse=True)
 def _env(monkeypatch):
-    for k in ("YTA_MODEL", "YTA_CHUNK_MINUTES", "YTA_SINGLE_PASS_TOKEN_BUDGET"):
+    for k in ("YTA_MODEL", "YTA_CHUNK_MINUTES", "YTA_SINGLE_PASS_MAX_MINUTES"):
         monkeypatch.delenv(k, raising=False)
 
 
@@ -75,30 +78,64 @@ def test_dedupe_skip_and_force(tmp_path, sample):
     assert len((tmp_path / "index.jsonl").read_text().splitlines()) == 1
 
 
-def test_fallback_to_windows_on_too_long(tmp_path, sample):
-    ex = FakeExtractor(sample, too_long=lambda w: w is None)
+def test_unknown_duration_is_probed_then_chunked(tmp_path, sample):
+    ex = FakeExtractor(sample)
     r = analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(None), now=NOW)
     kinds = [c[0] for c in ex.calls]
-    assert kinds == ["extract", "probe", "extract", "extract", "extract"]  # 3000s / 20min windows
+    assert kinds == ["probe", "extract", "extract", "extract"]  # 3000s > 25 min: never tries a single pass
     run = r.analysis.run
     assert run.chunked and [(w.start_s, w.end_s) for w in run.windows] == [(0, 1200), (1200, 2400), (2400, 3000)]
+    assert run.calls == 4 and run.usage.total_tokens == 60
     assert r.analysis.video.duration_s == 3000
     # sample timestamps were clip-relative; they are shifted to absolute time
     assert [c.ts for c in r.analysis.claims] == ["00:01:05", "00:21:05", "00:41:05"]
     assert r.analysis.summary.count("[") == 3
 
 
+def test_short_unknown_duration_single_pass(tmp_path, sample):
+    ex = FakeExtractor(sample, duration=600)
+    r = analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(None), now=NOW)
+    assert [c[0] for c in ex.calls] == ["probe", "extract"]
+    assert ex.calls[1][2] is None and not r.analysis.run.chunked
+    assert r.analysis.video.duration_s == 600
+
+
+def test_reactive_fallback_when_single_pass_too_long(tmp_path, sample, monkeypatch):
+    monkeypatch.setenv("YTA_CHUNK_MINUTES", "5")
+    ex = FakeExtractor(sample, too_long=lambda w: w is None)
+    r = analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(900), now=NOW)
+    assert [c[0] for c in ex.calls] == ["extract"] * 4
+    assert [(w.start_s, w.end_s) for w in r.analysis.run.windows] == [(0, 300), (300, 600), (600, 900)]
+
+
+def test_single_pass_boundary(tmp_path, sample):
+    ex = FakeExtractor(sample)
+    analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(1500), now=NOW)
+    assert ex.calls[0][2] is None
+    ex = FakeExtractor(sample)
+    analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(1501), now=NOW, force=True)
+    assert ex.calls[0][2] is not None
+
+
 def test_proactive_chunking_when_duration_known(tmp_path, sample):
     ex = FakeExtractor(sample)
     r = analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(3 * 3600), now=NOW)
-    assert all(c[2] is not None for c in ex.calls)  # never tried single pass
+    assert all(c[0] == "extract" and c[2] is not None for c in ex.calls)  # no probe, no single pass
     assert len(r.analysis.run.windows) == 9
 
 
-def test_low_res_raises_single_pass_ceiling(tmp_path, sample):
-    ex = FakeExtractor(sample)
-    analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(3600), now=NOW, low_res=True)
-    assert ex.calls[0][2] is None
+def test_probe_fails_single_pass_ok(tmp_path, sample):
+    ex = FakeExtractor(sample, probe_fails=True)
+    r = analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(None), now=NOW)
+    assert [c[0] for c in ex.calls] == ["probe", "extract"]
+    assert r.status == "created" and r.analysis.video.duration_s is None
+
+
+def test_probe_and_single_pass_fail(tmp_path, sample):
+    ex = FakeExtractor(sample, probe_fails=True, too_long=lambda w: True)
+    with pytest.raises(ExtractionFailed, match="duration is unknown"):
+        analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(None), now=NOW)
+    assert not (tmp_path / "index.jsonl").exists()
 
 
 def test_window_split_when_still_too_long(tmp_path, sample, monkeypatch):

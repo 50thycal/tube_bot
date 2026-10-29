@@ -13,6 +13,7 @@ import time
 from dataclasses import dataclass
 from typing import Callable, TypeVar
 
+import httpx
 from google import genai
 from google.genai import errors, types
 from pydantic import BaseModel, ValidationError
@@ -26,7 +27,11 @@ log = logging.getLogger(__name__)
 # Current Flash model per Google's video-understanding docs/cookbook (Oct 2026).
 DEFAULT_MODEL = "gemini-3.8-flash"
 
-RETRYABLE_CODES = {408, 429, 500, 502, 503, 504}
+RETRYABLE_CODES = {408, 429, 500, 502, 503}
+# Server gave up on the request: retrying the same heavy request rarely helps, so
+# these surface as TooLong and the pipeline retries with smaller windows instead.
+HEAVY_CODES = {504}
+HTTP_TIMEOUT_MS = 15 * 60 * 1000
 
 _TOO_LONG_HINTS = (
     "token count",
@@ -129,7 +134,7 @@ class GeminiExtractor:
         if self._client is None:
             if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")):
                 raise ExtractionFailed("GEMINI_API_KEY is not set (put it in .env or the environment)")
-            self._client = genai.Client()
+            self._client = genai.Client(http_options=types.HttpOptions(timeout=HTTP_TIMEOUT_MS))
         return self._client
 
     # ------------------------------------------------------------------ public
@@ -158,6 +163,7 @@ class GeminiExtractor:
             system_instruction=prompt.SYSTEM_INSTRUCTION,
             response_mime_type="application/json",
             response_schema=schema,
+            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         )
         if self.low_res or force_low_res:
             cfg.media_resolution = types.MediaResolution.MEDIA_RESOLUTION_LOW
@@ -190,8 +196,14 @@ class GeminiExtractor:
         while True:
             try:
                 return fn()
+            except httpx.TransportError as e:
+                # Seen in practice: a ~30 min video in one request ran ~4.5 min and the
+                # server dropped the connection without a response.
+                raise TooLong(f"connection dropped/timed out ({type(e).__name__}: {e}); request likely too heavy") from e
             except errors.APIError as e:
                 code = getattr(e, "code", None)
+                if code in HEAVY_CODES:
+                    raise TooLong(f"server deadline exceeded (HTTP {code}): {e}") from e
                 if code in RETRYABLE_CODES and attempt < self.max_retries:
                     delay = min(60.0, 2.0 * 2**attempt) + random.uniform(0, 1)
                     log.warning("Gemini HTTP %s, retrying in %.1fs (%d/%d)", code, delay, attempt + 1, self.max_retries)
