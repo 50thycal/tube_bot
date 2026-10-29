@@ -101,6 +101,7 @@ class Store:
             model_version=a.run.model_version,
             schema_version=a.schema_version,
             duration_s=a.video.duration_s,
+            engine=a.run.engine,
             chunked=a.run.chunked,
             calls=a.run.calls,
             usage=a.run.usage,

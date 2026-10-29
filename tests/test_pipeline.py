@@ -59,6 +59,7 @@ def _meta(duration=None):
 def _env(monkeypatch):
     for k in ("YTA_MODEL", "YTA_MAX_WINDOWS"):
         monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("YTA_ENGINE", "static")  # agentic engine is covered in test_agentic.py
     # Tests below are written against these sizes; defaults are checked separately.
     monkeypatch.setenv("YTA_CHUNK_MINUTES", "15")
     monkeypatch.setenv("YTA_SINGLE_PASS_MAX_MINUTES", "20")
@@ -67,12 +68,12 @@ def _env(monkeypatch):
 def test_default_window_sizes(tmp_path, sample, monkeypatch):
     monkeypatch.delenv("YTA_CHUNK_MINUTES")
     monkeypatch.delenv("YTA_SINGLE_PASS_MAX_MINUTES")
-    ex = FakeExtractor(sample, duration=600)
-    analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(600), now=NOW)
-    assert ex.calls[0][2] is None  # <= 10 min: single pass
-    ex = FakeExtractor(sample, duration=1500)
-    r = analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(None), now=NOW, force=True)
-    assert [c[2].start_s for c in ex.calls] == [0, 600, 1200]  # 10-min windows, stops when the video ends
+    ex = FakeExtractor(sample, duration=900)
+    analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(900), now=NOW)
+    assert ex.calls[0][2] is None  # <= 15 min: single pass
+    ex = FakeExtractor(sample, duration=2500)
+    analyze(URL, tmp_path, extractor=ex, metadata_fetcher=_meta(None), now=NOW, force=True)
+    assert [c[2].start_s for c in ex.calls] == [0, 900, 1800]  # 15-min windows, stops when the video ends
 
 
 def test_last_walked_window_trimmed_to_video_end(tmp_path, sample):

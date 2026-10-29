@@ -5,7 +5,7 @@ Request queue for the `analyze` workflow. Pushing a new or changed `requests/*.t
 Each line holds one request (blank lines and `#` comments are ignored):
 
 ```
-https://youtu.be/VIDEO_ID [--force] [--low-res]
+https://youtu.be/VIDEO_ID [--force] [--low-res] [--engine=agentic|--engine=static]
 ```
 
 Push-triggered runs install the code from the pushed commit, so a fix on a branch can be tried before it is merged. Re-queue a request by editing its file (for example, adding a `#` comment line).

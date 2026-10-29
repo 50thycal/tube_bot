@@ -177,6 +177,7 @@ class RunInfo(_Model):
     model_version: str = ""
     analyzed_at: str
     low_res: bool = False
+    engine: str = "static"  # "agentic" (Interactions API) | "static" (generate_content)
     chunked: bool = False
     windows: list[Window] = Field(default_factory=list)
     calls: int = 0
@@ -201,6 +202,7 @@ class IndexEntry(_Model):
     model_version: str = ""
     schema_version: str
     duration_s: int | None = None
+    engine: str = "static"
     chunked: bool = False
     calls: int = 0
     usage: Usage = Field(default_factory=Usage)

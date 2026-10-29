@@ -117,11 +117,18 @@ def test_deadline_exceeded_is_too_long_without_retry():
     assert len(client.models.calls) == 1
 
 
-def test_dropped_connection_is_too_long():
-    ex, client = _ex([httpx.RemoteProtocolError("Server disconnected without sending a response.")])
+def test_dropped_connection_retried_once_then_too_long():
+    drop = httpx.RemoteProtocolError("Server disconnected without sending a response.")
+    ex, client = _ex([drop, drop])
     with pytest.raises(TooLong, match="RemoteProtocolError"):
         ex.extract(URL)
-    assert len(client.models.calls) == 1
+    assert len(client.models.calls) == 2
+
+
+def test_dropped_connection_retry_succeeds(sample):
+    ex, client = _ex([httpx.RemoteProtocolError("dropped"), _resp(sample)])
+    assert ex.extract(URL).content.summary
+    assert len(client.models.calls) == 2
 
 
 def test_retries_exhausted():

@@ -40,6 +40,7 @@ def render(a: VideoAnalysis) -> str:
     L.append(
         f"<sub>schema {a.schema_version} · model {r.model}"
         + (f" ({r.model_version})" if r.model_version and r.model_version != r.model else "")
+        + f" · {r.engine}"
         + f" · analyzed {r.analyzed_at}"
         + (f" · {len(r.windows)} windows" if r.chunked else "")
         + (" · low-res" if r.low_res else "")

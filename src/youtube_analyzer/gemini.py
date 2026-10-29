@@ -89,10 +89,10 @@ def resolve_model(cli_value: str | None = None) -> str:
     return cli_value or os.environ.get("YTA_MODEL") or DEFAULT_MODEL
 
 
-def classify_error(e: errors.APIError) -> Exception | None:
+def classify_error(e: Exception) -> Exception | None:
     """Map a non-retryable API error to a domain error, or None to re-raise as-is."""
     msg = (getattr(e, "message", None) or str(e)).lower()
-    code = getattr(e, "code", None)
+    code = getattr(e, "code", None) or getattr(e, "status_code", None)  # generate_content / Interactions errors
     if code == 400 and any(h in msg for h in _PAST_END_HINTS):
         return PastEnd(str(e))
     if code == 400 and any(h in msg for h in _TOO_LONG_HINTS):
@@ -141,12 +141,14 @@ class GeminiExtractor:
         low_res: bool = False,
         client: genai.Client | None = None,
         max_retries: int = 5,
+        drop_retries: int = 1,
         sleep: Callable[[float], None] = time.sleep,
     ):
         self.model = model
         self.low_res = low_res
         self._client = client
         self.max_retries = max_retries
+        self.drop_retries = drop_retries
         self._sleep = sleep
         mot = os.environ.get("YTA_MAX_OUTPUT_TOKENS")
         self.max_output_tokens = int(mot) if mot else None
@@ -222,12 +224,19 @@ class GeminiExtractor:
 
     def _with_retries(self, fn: Callable[[], types.GenerateContentResponse]) -> types.GenerateContentResponse:
         attempt = 0
+        drops = 0
         while True:
             try:
                 return fn()
             except httpx.TransportError as e:
-                # Seen in practice: a ~30 min video in one request ran ~4.5 min and the
-                # server dropped the connection without a response.
+                # Seen in practice: requests dropped without a response after ~255-270 s,
+                # largely independent of clip length. Retry the same request once (as
+                # tubetell does) before treating it as too heavy and splitting.
+                if drops < self.drop_retries:
+                    drops += 1
+                    log.warning("connection dropped (%s); retrying same request (%d/%d)", type(e).__name__, drops, self.drop_retries)
+                    self._sleep(4.0)
+                    continue
                 raise TooLong(f"connection dropped/timed out ({type(e).__name__}: {e}); request likely too heavy") from e
             except errors.APIError as e:
                 code = getattr(e, "code", None)
