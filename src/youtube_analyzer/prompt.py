@@ -60,15 +60,16 @@ def full_prompt() -> str:
     return _FULL_TASK
 
 
-def window_prompt(start_s: int, end_s: int, index: int, total: int) -> str:
+def window_prompt(start_s: int, end_s: int, index: int, total: int | None) -> str:
+    of = f"of {total} " if total else ""
     return (
         _FULL_TASK
-        + f"\nThe attached input is clip {index + 1} of {total} of a longer video, covering "
+        + f"\nThe attached input is clip {index + 1} {of}of a longer video, requested as "
         f"{fmt_ts(start_s)} to {fmt_ts(end_s)} of the full video. Extract only what "
         "appears in this clip. Report every timestamp as absolute time in the full "
         f"video (i.e. between {fmt_ts(start_s)} and {fmt_ts(end_s)}). The summary "
         "should describe this clip only.\n"
+        "Also set clip_has_video (false only if the requested range is entirely past the "
+        "end of the video, in which case leave every list empty) and video_ended_in_clip "
+        "(true if the video ends before the end of the requested range).\n"
     )
-
-
-DURATION_PROMPT = "Return the total duration of the attached video in seconds."

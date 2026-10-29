@@ -13,20 +13,27 @@ import time
 from dataclasses import dataclass
 from typing import Callable, TypeVar
 
+import httpx
 from google import genai
 from google.genai import errors, types
 from pydantic import BaseModel, ValidationError
 
 from . import prompt
 from .metadata import VideoUnavailable
-from .schema import ContentExtraction, DurationProbe, Usage, Window
+from .schema import ContentExtraction, Usage, Window, WindowExtraction
 
 log = logging.getLogger(__name__)
 
 # Current Flash model per Google's video-understanding docs/cookbook (Oct 2026).
 DEFAULT_MODEL = "gemini-3.8-flash"
 
-RETRYABLE_CODES = {408, 429, 500, 502, 503, 504}
+RETRYABLE_CODES = {408, 429, 500, 502, 503}
+# Server gave up on the request: retrying the same heavy request rarely helps, so
+# these surface as TooLong and the pipeline retries with smaller windows instead.
+HEAVY_CODES = {504}
+HTTP_TIMEOUT_MS = 15 * 60 * 1000
+
+_PAST_END_HINTS = ("offset", "video duration", "out of range", "beyond the end")
 
 _TOO_LONG_HINTS = (
     "token count",
@@ -67,6 +74,10 @@ class ExtractionFailed(RuntimeError):
     pass
 
 
+class PastEnd(RuntimeError):
+    """A clip was requested beyond the end of the video."""
+
+
 @dataclass
 class CallResult:
     content: BaseModel
@@ -82,6 +93,8 @@ def classify_error(e: errors.APIError) -> Exception | None:
     """Map a non-retryable API error to a domain error, or None to re-raise as-is."""
     msg = (getattr(e, "message", None) or str(e)).lower()
     code = getattr(e, "code", None)
+    if code == 400 and any(h in msg for h in _PAST_END_HINTS):
+        return PastEnd(str(e))
     if code == 400 and any(h in msg for h in _TOO_LONG_HINTS):
         return TooLong(str(e))
     # Config problems (bad key, unknown model id) are surfaced as-is.
@@ -107,6 +120,20 @@ def _usage(resp: types.GenerateContentResponse) -> Usage:
     )
 
 
+def _join_chunks(chunks: list[types.GenerateContentResponse]) -> types.GenerateContentResponse:
+    """Fold a streamed response back into a single response."""
+    if not chunks:
+        raise ExtractionFailed("empty stream from Gemini")
+    text = "".join(c.text or "" for c in chunks)
+    finish = next((c.candidates[0].finish_reason for c in reversed(chunks) if c.candidates and c.candidates[0].finish_reason), None)
+    return types.GenerateContentResponse(
+        candidates=[types.Candidate(content=types.Content(role="model", parts=[types.Part(text=text)] if text else []), finish_reason=finish)],
+        usage_metadata=next((c.usage_metadata for c in reversed(chunks) if c.usage_metadata), None),
+        model_version=next((c.model_version for c in chunks if c.model_version), None),
+        prompt_feedback=next((c.prompt_feedback for c in chunks if c.prompt_feedback), None),
+    )
+
+
 class GeminiExtractor:
     def __init__(
         self,
@@ -129,37 +156,34 @@ class GeminiExtractor:
         if self._client is None:
             if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")):
                 raise ExtractionFailed("GEMINI_API_KEY is not set (put it in .env or the environment)")
-            self._client = genai.Client()
+            self._client = genai.Client(http_options=types.HttpOptions(timeout=HTTP_TIMEOUT_MS))
         return self._client
 
     # ------------------------------------------------------------------ public
 
-    def extract(self, url: str, window: Window | None = None, index: int = 0, total: int = 1) -> CallResult:
-        text = prompt.full_prompt() if window is None else prompt.window_prompt(window.start_s, window.end_s, index, total)
-        return self._call(url, text, ContentExtraction, window)
-
-    def probe_duration(self, url: str) -> CallResult:
-        return self._call(url, prompt.DURATION_PROMPT, DurationProbe, None, fps=0.1, force_low_res=True)
+    def extract(self, url: str, window: Window | None = None, index: int = 0, total: int | None = 1) -> CallResult:
+        """Whole video (window=None) -> ContentExtraction; a clip -> WindowExtraction."""
+        if window is None:
+            return self._call(url, prompt.full_prompt(), ContentExtraction, None)
+        text = prompt.window_prompt(window.start_s, window.end_s, index, total)
+        return self._call(url, text, WindowExtraction, window)
 
     # ---------------------------------------------------------------- internal
 
-    def _video_part(self, url: str, window: Window | None, fps: float | None) -> types.Part:
+    def _video_part(self, url: str, window: Window | None) -> types.Part:
         part = types.Part(file_data=types.FileData(file_uri=url))
-        if window is not None or fps is not None:
-            part.video_metadata = types.VideoMetadata(
-                start_offset=f"{window.start_s}s" if window else None,
-                end_offset=f"{window.end_s}s" if window else None,
-                fps=fps,
-            )
+        if window is not None:
+            part.video_metadata = types.VideoMetadata(start_offset=f"{window.start_s}s", end_offset=f"{window.end_s}s")
         return part
 
-    def _config(self, schema: type[BaseModel], force_low_res: bool) -> types.GenerateContentConfig:
+    def _config(self, schema: type[BaseModel]) -> types.GenerateContentConfig:
         cfg = types.GenerateContentConfig(
             system_instruction=prompt.SYSTEM_INSTRUCTION,
             response_mime_type="application/json",
             response_schema=schema,
+            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         )
-        if self.low_res or force_low_res:
+        if self.low_res:
             cfg.media_resolution = types.MediaResolution.MEDIA_RESOLUTION_LOW
         if self.max_output_tokens:
             cfg.max_output_tokens = self.max_output_tokens
@@ -171,13 +195,18 @@ class GeminiExtractor:
         text: str,
         schema: type[M],
         window: Window | None,
-        fps: float | None = None,
-        force_low_res: bool = False,
     ) -> CallResult:
-        contents = [types.Content(role="user", parts=[self._video_part(url, window, fps), types.Part(text=text)])]
-        config = self._config(schema, force_low_res)
-        resp = self._with_retries(lambda: self.client.models.generate_content(model=self.model, contents=contents, config=config))
+        contents = [types.Content(role="user", parts=[self._video_part(url, window), types.Part(text=text)])]
+        config = self._config(schema)
+        label = f"{window.start_s}-{window.end_s}s" if window else "full video"
+        t0 = time.monotonic()
+        try:
+            resp = self._with_retries(lambda: self._generate(contents, config))
+        except Exception as e:
+            log.warning("gemini %s failed after %.0fs: %s", label, time.monotonic() - t0, type(e).__name__)
+            raise
         usage = _usage(resp)
+        log.info("gemini %s took %.0fs (%d tokens)", label, time.monotonic() - t0, usage.total_tokens)
         try:
             content = self._parse(resp, schema)
         except (TooLong, ExtractionFailed) as e:
@@ -185,13 +214,25 @@ class GeminiExtractor:
             raise
         return CallResult(content=content, usage=usage, model_version=resp.model_version or "")
 
+    def _generate(self, contents: list[types.Content], config: types.GenerateContentConfig) -> types.GenerateContentResponse:
+        # Streamed so the connection carries data as soon as the model produces any;
+        # a long silent non-streaming request was dropped by the server (~4.5 min).
+        chunks = list(self.client.models.generate_content_stream(model=self.model, contents=contents, config=config))
+        return _join_chunks(chunks)
+
     def _with_retries(self, fn: Callable[[], types.GenerateContentResponse]) -> types.GenerateContentResponse:
         attempt = 0
         while True:
             try:
                 return fn()
+            except httpx.TransportError as e:
+                # Seen in practice: a ~30 min video in one request ran ~4.5 min and the
+                # server dropped the connection without a response.
+                raise TooLong(f"connection dropped/timed out ({type(e).__name__}: {e}); request likely too heavy") from e
             except errors.APIError as e:
                 code = getattr(e, "code", None)
+                if code in HEAVY_CODES:
+                    raise TooLong(f"server deadline exceeded (HTTP {code}): {e}") from e
                 if code in RETRYABLE_CODES and attempt < self.max_retries:
                     delay = min(60.0, 2.0 * 2**attempt) + random.uniform(0, 1)
                     log.warning("Gemini HTTP %s, retrying in %.1fs (%d/%d)", code, delay, attempt + 1, self.max_retries)

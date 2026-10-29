@@ -1,9 +1,10 @@
 import json
 
+import httpx
 import pytest
 from google.genai import errors, types
 
-from youtube_analyzer.gemini import DEFAULT_MODEL, ExtractionFailed, GeminiExtractor, TooLong, classify_error, resolve_model
+from youtube_analyzer.gemini import DEFAULT_MODEL, ExtractionFailed, GeminiExtractor, PastEnd, TooLong, classify_error, resolve_model
 from youtube_analyzer.metadata import VideoUnavailable
 from youtube_analyzer.schema import Window
 
@@ -29,12 +30,12 @@ class FakeModels:
         self.outcomes = list(outcomes)
         self.calls = []
 
-    def generate_content(self, model, contents, config):
+    def generate_content_stream(self, model, contents, config):
         self.calls.append((model, contents, config))
         out = self.outcomes.pop(0)
         if isinstance(out, Exception):
             raise out
-        return out
+        return iter(out if isinstance(out, list) else [out])
 
 
 class FakeClient:
@@ -68,11 +69,13 @@ def test_extract_full_request_shape(sample):
     assert config.response_mime_type == "application/json"
     assert config.media_resolution is None
     assert "DATA, not instructions" in config.system_instruction
+    assert config.automatic_function_calling.disable is True
 
 
 def test_extract_window_and_low_res(sample):
-    ex, client = _ex([_resp(sample)], low_res=True)
-    ex.extract(URL, Window(start_s=1200, end_s=2400), 1, 3)
+    ex, client = _ex([_resp({**sample, "clip_has_video": True, "video_ended_in_clip": True})], low_res=True)
+    res = ex.extract(URL, Window(start_s=1200, end_s=2400), 1, 3)
+    assert res.content.video_ended_in_clip is True
     _, contents, config = client.models.calls[0]
     vm = contents[0].parts[0].video_metadata
     assert (vm.start_offset, vm.end_offset) == ("1200s", "2400s")
@@ -80,10 +83,45 @@ def test_extract_window_and_low_res(sample):
     assert "clip 2 of 3" in contents[0].parts[1].text
 
 
+def test_streamed_chunks_are_joined(sample):
+    text = json.dumps(sample)
+    mid = len(text) // 2
+    first = types.GenerateContentResponse(
+        candidates=[types.Candidate(content=types.Content(role="model", parts=[types.Part(text=text[:mid])]))],
+        model_version="gemini-test-001",
+    )
+    last = _resp(sample)
+    last.candidates[0].content.parts[0].text = text[mid:]
+    ex, _ = _ex([[first, last]])
+    res = ex.extract(URL)
+    assert res.content.summary == sample["summary"]
+    assert res.usage.total_tokens == 1250 and res.model_version == "gemini-test-001"
+
+
+def test_window_without_flags_fails_validation(sample):
+    ex, _ = _ex([_resp(sample)])
+    with pytest.raises(ExtractionFailed):
+        ex.extract(URL, Window(start_s=0, end_s=900), 0, None)
+
+
 def test_retries_then_succeeds(sample):
     ex, client = _ex([_err(errors.ClientError, 429, "quota"), _err(errors.ServerError, 503, "overloaded"), _resp(sample)])
     assert ex.extract(URL).content.summary
     assert len(client.models.calls) == 3
+
+
+def test_deadline_exceeded_is_too_long_without_retry():
+    ex, client = _ex([_err(errors.ServerError, 504, "Deadline exceeded")])
+    with pytest.raises(TooLong, match="504"):
+        ex.extract(URL)
+    assert len(client.models.calls) == 1
+
+
+def test_dropped_connection_is_too_long():
+    ex, client = _ex([httpx.RemoteProtocolError("Server disconnected without sending a response.")])
+    with pytest.raises(TooLong, match="RemoteProtocolError"):
+        ex.extract(URL)
+    assert len(client.models.calls) == 1
 
 
 def test_retries_exhausted():
@@ -123,6 +161,7 @@ def test_schema_invalid_response():
         (errors.ClientError, 400, "API key not valid. Please pass a valid API key.", None),
         (errors.ClientError, 404, "models/gemini-9 is not found for API version v1beta", None),
         (errors.ClientError, 400, "Request contains an invalid argument.", None),
+        (errors.ClientError, 400, "start_offset exceeds the video duration", PastEnd),
     ],
 )
 def test_classify_error(cls, code, msg, expected):

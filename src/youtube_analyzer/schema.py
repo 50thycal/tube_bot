@@ -128,8 +128,15 @@ class ContentExtraction(_Model):
     open_questions: list[OpenQuestion]
 
 
-class DurationProbe(_Model):
-    duration_s: int = Field(description="Total duration of the video in seconds.")
+class WindowExtraction(ContentExtraction):
+    """Per-clip response. The two flags let the pipeline walk a video of unknown length."""
+
+    clip_has_video: bool = Field(
+        description="False if the requested clip range lies entirely past the end of the video (nothing to analyze)."
+    )
+    video_ended_in_clip: bool = Field(
+        description="True if the video ends before the end of the requested clip range."
+    )
 
 
 # --------------------------------------------------------------------------

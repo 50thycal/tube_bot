@@ -8,4 +8,6 @@ Each line holds one request (blank lines and `#` comments are ignored):
 https://youtu.be/VIDEO_ID [--force] [--low-res]
 ```
 
+Push-triggered runs install the code from the pushed commit, so a fix on a branch can be tried before it is merged. Re-queue a request by editing its file (for example, adding a `#` comment line).
+
 This exists so an agent that can push commits but can't dispatch workflows can still queue videos. The files also serve as a log of what was requested.

@@ -10,18 +10,16 @@ from pathlib import Path
 from typing import Callable
 
 from . import __version__
-from .gemini import CallResult, GeminiExtractor, TooLong, resolve_model
+from .gemini import CallResult, ExtractionFailed, GeminiExtractor, PastEnd, TooLong, resolve_model
 from .merge import merge, normalize_window, plan_windows
 from .metadata import Metadata, fetch_metadata
 from .schema import ContentExtraction, RunInfo, Usage, VideoAnalysis, VideoInfo, Window
 from .store import Store
+from .timestamps import parse_ts
 from .urls import normalize
 
 log = logging.getLogger(__name__)
 
-# Approximate video tokens per second (frames + audio) by media resolution.
-TOKENS_PER_S_DEFAULT = 300
-TOKENS_PER_S_LOW = 100
 MIN_WINDOW_S = 5 * 60
 
 
@@ -78,36 +76,44 @@ def analyze(
     ex = extractor or GeminiExtractor(model=model, low_res=low_res)
     run = _Run()
 
-    window_s = _env_int("YTA_CHUNK_MINUTES", 20) * 60
-    budget = _env_int("YTA_SINGLE_PASS_TOKEN_BUDGET", 600_000)
-    rate = TOKENS_PER_S_LOW if low_res else TOKENS_PER_S_DEFAULT
+    # Every request is kept to roughly one window of video. Observed: the server
+    # drops any request still processing after ~255-270 s (whole videos, even a
+    # low-res duration probe; a 15-min window took ~255 s), so a video of unknown
+    # length is never sent whole and windows default to 10 min.
+    window_s = _env_int("YTA_CHUNK_MINUTES", 10) * 60
+    max_single_s = _env_int("YTA_SINGLE_PASS_MAX_MINUTES", 10) * 60
+    max_windows = _env_int("YTA_MAX_WINDOWS", 16)
     duration = meta.duration_s
 
     windows: list[Window] = []
     content: ContentExtraction | None = None
-    chunk = bool(duration and duration * rate > budget)
-    if chunk:
-        log.info("~%d est. tokens > budget %d; chunking up front", duration * rate, budget)
-    else:
+    chunk = True
+    if duration and duration <= max_single_s:
         try:
             res = ex.extract(canon)
             run.record(res)
             content = normalize_window(res.content, None)
+            chunk = False
         except TooLong as e:
             run.record_failure(e)
             log.warning("single pass too long (%s); falling back to %d-min windows", e, window_s // 60)
-            chunk = True
 
     if chunk:
-        if not duration:
-            probe = ex.probe_duration(canon)
-            run.record(probe)
-            duration = probe.content.duration_s
-            log.info("probed duration: %ss", duration)
-        parts: list[tuple[Window, ContentExtraction]] = []
-        planned = plan_windows(duration, window_s)
-        for i, w in enumerate(planned):
-            parts += _extract_window(ex, canon, w, i, len(planned), run)
+        if duration:
+            planned = plan_windows(duration, window_s)
+            log.info("duration %ss: %d windows of %d min", duration, len(planned), window_s // 60)
+            parts: list[tuple[Window, ContentExtraction]] = []
+            for i, w in enumerate(planned):
+                parts += _extract_window(ex, canon, w, i, len(planned), run)
+        else:
+            log.info("duration unknown: walking %d-min windows until the video ends", window_s // 60)
+            parts = _walk_windows(ex, canon, window_s, max_windows, run)
+            ends = [parse_ts(s.end_ts) for _, c in parts for s in c.segments]
+            duration = max((e for e in ends if e is not None), default=None)
+            if duration:  # trim the last window to where the video actually ends
+                parts = [(Window(start_s=w.start_s, end_s=min(w.end_s, max(duration, w.start_s + 1))), c) for w, c in parts]
+        if not parts:
+            raise ExtractionFailed("no window returned any video content")
         windows = [w for w, _ in parts]
         content = merge(parts)
 
@@ -130,13 +136,34 @@ def analyze(
     return Result(status="created", video_id=video_id, path=path, analysis=analysis)
 
 
-def _extract_window(
-    ex: GeminiExtractor, url: str, w: Window, i: int, total: int, run: _Run
+def _walk_windows(
+    ex: GeminiExtractor, url: str, window_s: int, max_windows: int, run: _Run
 ) -> list[tuple[Window, ContentExtraction]]:
-    """Extract one window; if it is still too long, split it in half (down to MIN_WINDOW_S)."""
-    log.info("window %d/%d %ss-%ss", i + 1, total, w.start_s, w.end_s)
+    """Extract consecutive windows from 0:00 until the model reports the video has ended."""
+    parts: list[tuple[Window, ContentExtraction]] = []
+    for i in range(max_windows):
+        w = Window(start_s=i * window_s, end_s=(i + 1) * window_s)
+        got = _extract_window(ex, url, w, i, None, run)
+        parts += got
+        if not got or any(getattr(c, "video_ended_in_clip", False) for _, c in got):
+            return parts
+    log.warning("stopped after YTA_MAX_WINDOWS=%d windows; video may be longer", max_windows)
+    return parts
+
+
+def _extract_window(
+    ex: GeminiExtractor, url: str, w: Window, i: int, total: int | None, run: _Run
+) -> list[tuple[Window, ContentExtraction]]:
+    """Extract one window, dropping it if it lies past the end of the video.
+
+    If it is still too long, split it in half (down to MIN_WINDOW_S).
+    """
+    log.info("window %d/%s %ss-%ss", i + 1, total or "?", w.start_s, w.end_s)
     try:
         res = ex.extract(url, w, i, total)
+    except PastEnd as e:
+        log.info("window %ss-%ss is past the end of the video (%s)", w.start_s, w.end_s, e)
+        return []
     except TooLong as e:
         run.record_failure(e)
         span = w.end_s - w.start_s
@@ -144,8 +171,12 @@ def _extract_window(
             raise
         mid = w.start_s + span // 2
         log.warning("window %ss-%ss too long; splitting at %ss", w.start_s, w.end_s, mid)
-        return _extract_window(ex, url, Window(start_s=w.start_s, end_s=mid), i, total, run) + _extract_window(
-            ex, url, Window(start_s=mid, end_s=w.end_s), i, total, run
-        )
+        first = _extract_window(ex, url, Window(start_s=w.start_s, end_s=mid), i, total, run)
+        if not first or any(getattr(c, "video_ended_in_clip", False) for _, c in first):
+            return first
+        return first + _extract_window(ex, url, Window(start_s=mid, end_s=w.end_s), i, total, run)
     run.record(res)
+    if not getattr(res.content, "clip_has_video", True):
+        log.info("window %ss-%ss has no video (past the end)", w.start_s, w.end_s)
+        return []
     return [(w, normalize_window(res.content, w))]
