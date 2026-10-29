@@ -1,123 +1,95 @@
 {
-  "summary": "[00:00:00–00:05:00] This video clip introduces a large-scale quantitative backtest of classical price action trading concepts using Claude to build and run test systems. Analyzing five years of one-minute data across NQ and ES futures representing over 327 million simulated trades across 101,345 system configurations, the presenter defines key price action mechanics (support/resistance levels, trend break of structure, change of character, sweeps, confirmation, stops, and targets), examines how subjective discretionary chart interpretations are formalized into objective testable rules, and highlights initial findings such as the strength of the change of character setup and the 50% reversal rate of liquidity sweeps.\n\n[00:05:00–00:10:00] This clip evaluates price action trading concepts using backtests across 5 years of 1-minute NQ and ES futures data covering 327 million simulated trades across 101,345 rule variations. The analysis demonstrates that win rate does not track overall profitability (correlation 0.27), trading lower timeframes like the 1-minute chart is penalized heavily by costs (46% of gross profit), support and resistance levels demonstrably hold better than random lines (51.1% vs 42.4%), more touches do not make a level stronger, and flip zones provide significant positive predictive edge (+11.5 percentage points).\n\n[00:10:00–00:15:00] This clip evaluates price action trading concepts using backtests on historical and unseen locked-forward futures data (NQ and ES). The author analyzes trend setups, trigger mechanisms, stop-loss types, context filters, and timeframe performance, finding that higher timeframes (4-hour and daily), 4-hour change-of-character (CHoCH) reversals without sweeps, hard stops, New York trading hours, and confirmation candles produce positive results, while close-based stops and daily trend alignment filters detract from edge.\n\n[00:15:00–00:17:10] In this final segment, the presenter emphasizes that across extensive backtesting—including 9,000 algorithmic strategies, ICT sweep fades, and price action 4-hour change-of-character setups—mean reversion consistently emerges as the sole foundational principle that holds up. He then shares the five sequential prompts of his 'Price Action Lab' architecture, allowing viewers to build, automate, and rigorously backtest these systems in Python using LLMs like Claude Code or ChatGPT without look-ahead bias or overfitting.",
+  "summary": "[00:00:00–00:07:30] Brendan details a large-scale backtesting study conducted using Claude to programmatically evaluate price action concepts across 5 years of 1-minute futures data (NQ and ES, covering 3.6 million bars and 327 million simulated trades). By formalizing subjective visual chart concepts into parameterized quantitative rules across 10 core setups (such as level bounces, break of structure, change of character, and fair value gaps), the study tests 101,345 strategy variations, finding that while 24,879 versions were profitable after transaction costs, only 8,310 met a baseline risk-adjusted performance hurdle of Sharpe 0.5+.\n\n[00:07:30–00:15:00] This video segment evaluates common price action trading concepts using quantitative backtests across tens of thousands of strategy variations on NQ and ES futures, including out-of-sample locked test data. It demonstrates that win rate has weak correlation to profitability (0.27) and lower timeframes suffer severely from transaction costs (consuming 46% of gross profit on the 1m). The test shows that support and resistance levels beat random lines (holding 51.1% vs 42.4%), flip zones provide substantial statistical edge (+11.5 pts on NQ), and touch count does not strengthen levels. The single setup that robustly survived out-of-sample testing across both markets was a 4-hour change of character (CHoCH) without requiring a prior liquidity sweep, using a hard stop and trading during New York session hours.\n\n[00:15:00–00:17:10] In the concluding segment of the presentation, the speaker explains that across thousands of tested variations, mean-reversion setups (such as ICT's fading the sweep and the 4-hour change of character reversal) consistently form the baseline floor of viable trading edges. The speaker then presents the exact five-prompt framework used with LLMs (Claude/ChatGPT) to build an end-to-end Python research lab covering data ingestion, trade engine execution, multi-stage funnel filtering, out-of-sample sealed testing, and automated HTML dashboard generation.",
   "segments": [
     {
       "start_ts": "00:00:00",
       "end_ts": "00:01:05",
-      "topic": "Overview of the 100,000+ Price Action Concept Test",
+      "topic": "Introduction and Project Overview",
       "key_points": [
-        "Tested over 100,000 price action concept variations using Claude to determine what actually works versus fancy indicators.",
-        "Ran 40,000 exploratory samples plus thousands of common configurations across nearly 5 years of 1-minute data on NQ and ES futures.",
-        "Simulated over 327 million trades to eliminate reliance on anecdotal single-trader claims.",
-        "Presenter background: studied Math and Econ at UCLA, worked in investment banking at Raymond James for 3+ years, and spent 2 years building trading systems."
+        "Tested over 100,000 price action concepts using Claude to determine which trading mechanics actually work versus traditional indicators.",
+        "The testing framework evaluated 40,000 sampled parameter variations plus over 61,000 common settings across nearly 5 years of 1-minute futures data on NQ and ES.",
+        "Over 327 million simulated trades were executed across the test matrix.",
+        "Speaker background: Brendan studied Math and Economics at UCLA, worked in investment banking at Raymond James for over 3 years, and has spent the past 2 years building trading systems."
       ]
     },
     {
       "start_ts": "00:01:05",
-      "end_ts": "00:03:24",
-      "topic": "Core Price Action Concepts and Preliminary Findings",
-      "key_points": [
-        "Price action is defined as trading directly off the chart itself without secondary indicators.",
-        "Levels (support and resistance) beat random lines on timeframes from 5-minute to daily.",
-        "Trend is defined as series of higher highs and higher lows; a break of structure occurs when price closes above the last high.",
-        "Trend continuation showed no statistically meaningful follow-through on any chart timeframe tested.",
-        "Change of Character (CHoCH) occurs when price breaks and closes below the last higher low; this held up as the best-performing setup, especially on the 4-hour timeframe.",
-        "Sweeps (wicking past a key high or low where stop-losses sit and closing back inside) reversed only about half the time (~50%), meaning it functions as a secondary signal rather than a standalone edge.",
-        "Confirmation (e.g., waiting for a candle close rather than entering with a limit order at the level) beat limit entries on NQ.",
-        "Hard stops beat close-based stops; on the profit-target side, there was no measurable edge across variations.",
-        "Higher timeframes consistently yielded more profitable strategy variations."
-      ]
-    },
-    {
-      "start_ts": "00:03:24",
       "end_ts": "00:03:59",
-      "topic": "The Ten Price Action Setups Tested",
+      "topic": "Core Price Action Setup Components and the 10 Setups",
       "key_points": [
-        "Identified 10 primary setups: Level bounce, Breakout, Flip zone, Trend pullback, Trend line, Break of structure, Change of character, Sweep and reclaim, Supply and demand, and Fair value gap.",
-        "Promotion of the presenter's AI trading community on Skool covering stocks, options, crypto, and futures, and 1-on-1 trading system development."
+        "Price action trading relies on direct chart structure without lagging indicators.",
+        "Level: Horizontal support and resistance areas where price bounces; tested whether levels beat random lines from 1-minute to daily charts.",
+        "Trend: Higher highs and higher lows; price breaking past a previous high is defined as a 'break of structure' (BOS). Backtests indicated trend continuation rules often have no follow-through across arbitrary charts.",
+        "Change of Character (CHoCH): Occurs when price breaks in the opposite direction (e.g., closing below the last higher low); held up as the best performing setup, particularly on the 4-hour timeframe.",
+        "Sweep: Occurs when price momentarily breaches a high or low to trigger stops before reversing; data showed sweeps only reversed about half the time, making them useful as a filter rather than a standalone entry.",
+        "Confirmation: Requiring a candle to close back beyond the level before entering, rather than entering on a blind limit order.",
+        "The 10 major setups tested: Level bounce, Breakout, Flip zone, Trend pullback, Trend line, Break of structure, Change of character, Sweep and reclaim, Supply and demand, and Fair value gap."
       ]
     },
     {
       "start_ts": "00:03:59",
-      "end_ts": "00:05:00",
-      "topic": "Testing Methodology: Overcoming 'Drawn By Eye' Discretion",
-      "key_points": [
-        "Traditional price action trading suffers from subjectivity ('drawn by eye') where different traders draw different levels on the exact same chart.",
-        "Algorithmic rules applied to define discretionary elements: Level requires 2+ swings within 0.25 ATR; Touch defined as within 0.25 ATR of the level; Confirmation defined as a close back across it.",
-        "Parameter space spans 20.3 trillion theoretical combinations across specific 'dials': touches, line vs. zone, confirmation, stop logic, target logic, chart timeframe, and filters.",
-        "Tested 40,000 dial spreads (4,000 per setup) plus 61,345 common configurations (0 to 2 filters) totaling 101,345 tested model versions.",
-        "Evaluation gauntlet includes real transaction costs, slippage on every stop, treating ambiguous candles as losses, benchmarking against random lines and random trades, cross-checking on ES, and a 2-year locked-away out-of-sample dataset."
-      ]
-    },
-    {
-      "start_ts": "00:05:00",
       "end_ts": "00:06:59",
-      "topic": "Backtest Setup and Testing Scale",
+      "topic": "Testing Methodology and Execution Engine",
       "key_points": [
-        "Parameter space contains 20.3 trillion possible versions across different dials (touches, line/zone, confirmation, stop, target, chart, filters).",
-        "Ran 40,000 randomized versions (4,000 per setup across 10 setups) plus 61,345 common versions (usual settings, 0 to 2 filters), totaling 101,345 tested strategy versions.",
-        "Data consists of 5 years of 1-minute bars on NQ and ES futures (3.6 million bars, 327 million simulated trades).",
-        "Backtesting system built in Python via Claude with 'The Gauntlet': real costs, slippage on every trade/step, ambiguous bars treated as losses, comparisons against random lines and random trades, and a 2-year out-of-sample lock on ES."
+        "Traditional price action is drawn by eye and subjective; different traders draw levels differently based on feeling without verifying historical performance.",
+        "Algorithmic definition applied for testing: Level defined as 2+ swings within 0.25 ATR; touch defined as within 0.25 ATR of the level; confirmation defined as a close back across it.",
+        "Dial parameters tested include touches, line vs. zone, confirmation candle type, stop placement, profit target, chart timeframe, and trend/regime filters, creating 20.3 trillion theoretical combinations.",
+        "Backtest dataset: 5 years, 3.6 million 1-minute bars on NQ and ES futures.",
+        "The Gauntlet backtest rules: real exchange costs applied to every trade, slippage on every stop, ambiguous intra-candle touch of both stop and target counted as a full loss, and compared against random trade benchmarks.",
+        "Validation process: Out-of-sample testing on ES with 2 years of locked data that the testing engine never observed during initial NQ discovery."
       ]
     },
     {
       "start_ts": "00:06:59",
-      "end_ts": "00:07:24",
-      "topic": "Discovery Funnel Results",
+      "end_ts": "00:07:30",
+      "topic": "Overall Results Funnel and Win Rate Distribution",
       "key_points": [
-        "Out of 101,345 tested versions, 88,986 generated enough trades (30+) to be graded.",
-        "24,879 of 101,345 versions (~24.5%) made money after trading costs in NQ discovery.",
-        "8,310 versions (~8.2%) cleared a Sharpe ratio threshold of 0.5+."
+        "Out of 101,345 total versions tested, 88,986 generated at least 30 trades (enough trades to be graded).",
+        "24,879 versions (approximately 24.5%) made money after accounting for trading costs in the NQ discovery period.",
+        "8,310 versions (around 8.2%) achieved a Sharpe ratio of 0.5 or greater.",
+        "Scatter plot of 40,000 strategies shows win rate and profit per contract per year on NQ discovery.",
+        "138 strategies achieved an 80%+ win rate, but overall correlation between win rate and profit was only 0.27; 67 of the 138 high win-rate strategies used a 1R target."
       ]
     },
     {
-      "start_ts": "00:07:24",
+      "start_ts": "00:07:30",
       "end_ts": "00:07:52",
-      "topic": "Win Rate vs Profit Analysis",
+      "topic": "Win Rate vs Profitability",
       "key_points": [
-        "Claims of 80%+ win rates in price action trading are largely unfounded; only 138 of 40,000 strategies reached an 80%+ win rate.",
-        "67 of the 138 strategies achieving an 80%+ win rate relied on a 1R profit target.",
-        "Across all 40,000 strategies, win rate showed weak correlation with profit (correlation coefficient of 0.27)."
+        "Analyzed 40,000 strategies by win rate and annual result per contract on NQ discovery data.",
+        "Win rate rarely clears 80%; only 138 strategies achieved an 80%+ win rate, with 67 using a 1R target.",
+        "Win rate has a very low correlation (0.27) to overall net profit."
       ]
     },
     {
       "start_ts": "00:07:52",
       "end_ts": "00:08:29",
-      "topic": "Timeframe Performance and Cost Friction",
+      "topic": "Timeframe Performance and Trading Costs",
       "key_points": [
-        "Costs eat up 46.0% of gross profit on the 1-minute timeframe versus only 3.9% on the Daily timeframe.",
-        "Percentage of profitable versions increases from 32% on 1-minute to 47% on Daily.",
-        "Median annual PnL per contract is -$428k on 1m, -$308k on 5m, -$210k on 15m, -$4k on 1h, +$3k on 4h, and +$6k on Daily.",
-        "Trading higher timeframes (1h, 4h, Daily) requires less trading edge because overhead costs and slippage represent a much smaller percentage of gross gains."
+        "Trading costs consume 46.0% of gross profit on the 1-minute chart, but only 3.9% on the daily chart.",
+        "Profitable strategy share increases with timeframe: 32% on 1m, 36% on 5m, 44% on 15m, 47% on 1h, 48% on 4h, and 47% on Daily.",
+        "Higher timeframes (1h, 4h) trade less frequently, requiring less extreme edge to overcome friction and commissions."
       ]
     },
     {
       "start_ts": "00:08:29",
       "end_ts": "00:09:41",
-      "topic": "Support & Resistance Validity and Touch Count Myth",
+      "topic": "Support/Resistance Levels and Touch Count Analysis",
       "key_points": [
-        "Real horizontal support/resistance levels held 51.1% of touches across 5m to Daily charts compared to 42.4% for random lines (+8.7 points outperformance on NQ, +8.5 points on ES).",
-        "Testing the myth that 'more touches equal stronger levels': 1 touch beat random lines by +9.0 points, 2 touches by +7.8 points, 3 touches by +8.2 points, and 4 touches by +6.1 points.",
-        "Levels touched 3+ times bounced less frequently (19.2% vs 20.5%) and broke through more often (27.8% vs 26.1%) compared to 1 touch."
+        "Real support/resistance levels held 51.1% of touches compared to 42.4% for random lines across timeframes from 5m to daily (+8.7 pts NQ, +8.5 pts ES).",
+        "Tested the price action belief that more touches strengthen a level; evidence showed the opposite.",
+        "A level touched once outperformed random lines by +9.0 pts, whereas a level touched 4 times outperformed by +6.1 pts.",
+        "Levels touched 3+ times bounced slightly less often (19.2% vs 20.5%) and broke through more often (27.8% vs 26.1%)."
       ]
     },
     {
       "start_ts": "00:09:41",
-      "end_ts": "00:10:00",
-      "topic": "Level Rules and Flip Zones Edge",
-      "key_points": [
-        "Testing various level rules: Touch count showed -1.1 pts effect; Wall at 3+ touches showed -1.3 pts; Weaker pushes showed +0.4 pts; Box vs line showed +0.5 pts.",
-        "Flip zones (prior resistance becoming support or vice versa) outperformed random baselines by +11.5 percentage points on NQ and +10.9 percentage points on ES."
-      ]
-    },
-    {
-      "start_ts": "00:10:00",
       "end_ts": "00:10:11",
       "topic": "Level Rules and Flip Zones",
       "key_points": [
-        "Flip zones outperformed other level rules, adding +11.5 percentage points overall and +10.9 points on ES.",
-        "Touch count (-1.1 pts) and wall at 3+ touches (-1.3 pts) reduced performance.",
-        "The speaker concludes flip zones are the strongest and most important concept in price action besides basic support and resistance."
+        "Flip zones (prior resistance turning into support after breakout on first retest) held +11.5 percentage points better than random lines on NQ and +10.9 points on ES.",
+        "Touch count (-1.1 pts) and walls at 3+ touches (-1.3 pts) showed negative impact.",
+        "Flip zones are identified as one of the strongest price action concepts."
       ]
     },
     {
@@ -125,259 +97,244 @@
       "end_ts": "00:10:33",
       "topic": "Trend Setups: BOS vs CHoCH and Sweeps",
       "key_points": [
-        "Break of structure (-0.04 ATR) and change of character (-0.05 ATR) do not predict price follow-through on their own.",
-        "Among trend setups, only change of character (CHoCH) reversal had a positive median profit (+$61), while BOS continuation (-$328), sweep and reclaim (-$368), and trend line (-$479) were negative.",
-        "Testing the conventional rule of waiting for a sweep before a change of character lost -$834 on unseen locked data, whereas taking the CHoCH without a sweep made +$903."
+        "Raw Break of Structure (-0.04 ATR) and Change of Character (-0.05 ATR) alone did not move price.",
+        "Among trend setups, only CHoCH reversal had a positive median result (+$61), whereas BOS continuation (-$328), sweep and reclaim (-$368), and trend line (-$479) were negative.",
+        "Testing trend setups as taught showed that requiring a liquidity sweep before a CHoCH lost money (-$834), while CHoCH without a sweep made +$903."
       ]
     },
     {
-      "start_ts": "00:10:34",
-      "end_ts": "00:10:59",
-      "topic": "Trigger: Confirmation Tax vs Limit Orders",
-      "key_points": [
-        "Waiting for a candle confirmation gives up 4.3 points of price entry relative to a limit order at the touch.",
-        "Despite worse execution price, waiting for confirmation increased edge by +$719 per year on Nasdaq futures (-$373 loss vs -$1,093 loss for limit at touch)."
-      ]
-    },
-    {
-      "start_ts": "00:10:59",
+      "start_ts": "00:10:33",
       "end_ts": "00:11:19",
-      "topic": "Exit Types: Hard Stop vs Close-Based Stop",
+      "topic": "Execution Mechanics: Confirmation Tax and Stop Types",
       "key_points": [
-        "Close-based stops (exiting only when a candle closes beyond the level) win more frequently (40% vs 29%), but result in larger losses.",
-        "Overall, close-based stops cost $132 more per year (-$290 vs -$158 for hard stops), meaning a plain hard stop performs better."
+        "Waiting for confirmation candle gave up 4.3 points of entry price but improved net annual edge by +$719 (-$373 loss vs -$1,093 loss for limit orders at the touch).",
+        "Close-based stops had a higher win rate (40% vs 29%) but larger losses, resulting in -$132 worse performance per year compared to hard stops (-$290 vs -$158)."
       ]
     },
     {
       "start_ts": "00:11:19",
-      "end_ts": "00:11:29",
-      "topic": "Context Filters: Trading Hours, Run Skips, and Daily Trend",
+      "end_ts": "00:12:30",
+      "topic": "Context Filters and Timeframe Ladder Out-of-Sample",
       "key_points": [
-        "Trading only during New York session hours (8:00 AM to 4:00 PM ET) improved performance by +$270 per year on unseen NQ.",
-        "Skipping trades after 3+ day directional runs improved performance by +$246.",
-        "Filtering trades to align with the daily trend hurt performance significantly (-$587)."
+        "Trading only New York session (8am to 4pm ET) added +$270 per year; skipping trades into 3+ day runs added +$246 per year; filtering by daily trend agreement hurt performance (-$587).",
+        "The 4h CHoCH setup was the only setup to pass consistency checks on both NQ and ES across original and common sets.",
+        "Tested on a 2-year locked out-of-sample dataset containing a 22.5% market drop and a 74.5% rally.",
+        "Out-of-sample profitability increased monotonically by timeframe: 9.2% on 1m, 20.3% on 5m, 28.8% on 15m, 37.7% on 1h, 45.1% on 4h, and 47.9% on daily."
       ]
     },
     {
-      "start_ts": "00:11:29",
-      "end_ts": "00:11:55",
-      "topic": "Consistency Check: Setups Passing Both NQ and ES",
+      "start_ts": "00:12:30",
+      "end_ts": "00:14:22",
+      "topic": "Best Performing Strategy Rules and Robustness",
       "key_points": [
-        "Across 40,000 tested variants and common versions, only the 4-hour change of character (CHoCH) passed in both NQ and ES markets across all sets.",
-        "On NQ, 4h CHoCH returned +$4,025/year (original) and +$4,884/year (common versions). On ES, it returned +$4,146/year (original) and +$3,374/year (common versions)."
+        "Best version: 4h Change of Character with no sweep, entry at candle close, hard stop past last swing, and 1:1 risk-to-reward target.",
+        "In the locked 2-year out-of-sample window, generated +$62,179 on 1 NQ contract (61 trades, 54% win rate) and +$39,284 on ES.",
+        "39 of 48 versions made money on NQ; 66% of all 314 common versions made money on NQ, and 54.5% on ES.",
+        "Average New York session version made +$17,041 per contract on NQ and remained profitable even excluding its 10 best days.",
+        "7 surviving rules summarized: 1) 4h CHoCH, 2) Higher timeframes, 3) NY session only, 4) Skip trades into 3+ day run, 5) Confirmation candle on NQ, 6) Hard stop, 7) No sweep before change."
       ]
     },
     {
-      "start_ts": "00:11:55",
-      "end_ts": "00:12:31",
-      "topic": "Timeframe Ladder in Final Locked Window",
-      "key_points": [
-        "The final test window (2025-2026) experienced a 22.5% selloff and a 74.5% rally.",
-        "Strategy profitability correlates directly with higher timeframes: 1m made money on 9.2% of versions, 5m on 20.3%, 15m on 28.8%, 1h on 37.7%, 4h on 45.1%, and Daily on 47.9%.",
-        "On NQ specifically, 45% of 4h versions made money versus only 9% of 1m versions."
-      ]
-    },
-    {
-      "start_ts": "00:12:31",
-      "end_ts": "00:13:15",
-      "topic": "Best 4h Setup Performance on Locked Data",
-      "key_points": [
-        "The best version (4h CHoCH, no sweep, candle close entry, hard stop past last swing, 1:1 risk-to-reward) earned +$62,179 on 1 NQ contract and +$39,284 on ES over 2 locked years.",
-        "NQ locked-period stats: 61 trades, 54% win rate.",
-        "Robustness test: 39 of 48 usual setting versions (81%) and 66% of 314 common versions made money on NQ; 54.5% made money on ES.",
-        "Average New York session version made +$17,041 per contract and remained profitable even excluding the 10 best days."
-      ]
-    },
-    {
-      "start_ts": "00:13:16",
+      "start_ts": "00:14:22",
       "end_ts": "00:15:00",
-      "topic": "Summary of Surviving Price Action Principles and Example Trade",
+      "topic": "Example Trade Walkthrough and Common Findings",
       "key_points": [
-        "Seven rules survived: (1) 4h CHoCH, (2) higher timeframe charts, (3) New York session only, (4) skip trades into 3+ day runs, (5) confirmation candle on NQ, (6) hard stop instead of close-based, (7) no sweep required before the change.",
-        "Walkthrough of an example trade on NQ 4h from July 11, 2024 showing entry at close, swing-high stop, and 1:1 target.",
-        "Comparison with previous channel studies: 9,000 strategies (mean reversion), ICT (fading the sweep), and price action (4h CHoCH)."
+        "Walkthrough of an actual short trade on NQ 4h from July 11, 2024: uptrend, CHoCH candle close, entry at close, stop above swing high, 1R target hit.",
+        "Noted consistent conclusions across 9,000 strategy tests (mean reversion), ICT tests (fading sweeps), and price action tests (4h CHoCH)."
       ]
     },
     {
       "start_ts": "00:15:00",
       "end_ts": "00:15:56",
-      "topic": "What Kept Working: Mean Reversion as the Baseline",
+      "topic": "What Survived: Mean Reversion as the Core Baseline",
       "key_points": [
-        "In the 9,000 strategies test, mean reversion was the only strategy type that held up across thousands of variations.",
-        "In the ICT test, the only version that held up was fading the sweep, which is fundamentally a mean-reversion strategy.",
-        "The 4-hour change-of-character setup is a reversal setup that also operates as a mean-reversion strategy.",
-        "The core concept is that when price stretches too high or too low, it reverts.",
-        "These test results represent 'the floor, not the ceiling'—a foundational baseline averaged across one contract per trade, meant to have risk management and position sizing layered on top."
+        "In the 9,000-strategy test, mean reversion was the only strategy family that consistently held up across thousands of variations.",
+        "In the ICT test, fading the sweep held up, which is fundamentally a mean-reversion style strategy.",
+        "In price action testing, the reversal setup (specifically the 4-hour change of character) functioned as a mean-reversion setup.",
+        "The core concept is that when price stretches too high or too low, it tends to revert.",
+        "These test results represent the floor (baseline foundation) rather than the ceiling, averaged at 1 contract per trade before customized risk management or sizing."
       ]
     },
     {
       "start_ts": "00:15:56",
-      "end_ts": "00:16:49",
-      "topic": "Build It Yourself: The Five Prompts Framework",
+      "end_ts": "00:16:14",
+      "topic": "The Five Prompts: Prompt 1 - Data and Dials",
       "key_points": [
-        "Viewers can replicate the entire testing framework by running five sequential prompts in Claude Code or ChatGPT.",
-        "Prompt 1 (Data and dials): sets up Python venv, data ingestion (NQ/ES 1-minute continuous front-month data, sha256 hashing), cleaning, warm-up (2021-10-01 to 2021-12-31), discovery (2022-01-03 to 2024-07-31), and sealed out-of-sample window (from 2024-08-01 onward), plus multi-timeframe bar creation and dial specifications (over 20 trillion combinations).",
-        "Prompt 2 (Engine and level tests): builds the single-contract trade engine with explicit costs ($4 commission per round trip, 1 tick slippage on market/stops), checks (including 20,000 random entries losing ~$9.80/trade), and behavior tests on levels and patterns against random baselines.",
-        "Prompt 3 (The funnel): tests 40,000 random configurations, 14,016 grid versions, and 47,320 trader-style samples across a 5-step filter (trade count >= 30, win rate > 50%, Sharpe >= 0.5, beat 10,000 twin random trades at p < 0.05, hold on ES with Sharpe >= 0.3).",
-        "Prompt 4 (The final test): unseals the held-out test data once with an access log guard, verifying hashed configurations and evaluating final candidates without modifying any dials.",
-        "Prompt 5 (The dashboard): generates a 1920x1080 static HTML presentation dashboard with full data provenance checks where every on-screen number traces to a saved file."
+        "Prompt 1 builds the data pipeline, time conversions (New York session 18:00-17:00 ET), data audits, and higher timeframe candle aggregation (5m, 15m, 1h, 4h, daily).",
+        "It establishes the testing windows: Warm-up (2021-10-01 to 2021-12-31), Discovery (2022-01-03 to 2024-07-31), and Sealed Final Window (2024-08-01 to 2024-10-16).",
+        "The sealed data is protected by a sha256 manifest and programmatic guard that logs access.",
+        "The prompt parametrizes 10 setups, 6 setup charts, 10 detector dials, and shared dials, counting 20,265,402,666,000 valid unique strategy parameter combinations."
       ]
     },
     {
-      "start_ts": "00:16:49",
-      "end_ts": "00:17:10",
-      "topic": "Conclusion and Outro",
+      "start_ts": "00:16:14",
+      "end_ts": "00:16:22",
+      "topic": "The Five Prompts: Prompt 2 - Engine and Level Tests",
       "key_points": [
-        "The presenter emphasizes that any trading style based on intuition can be codified into rules and tested at scale with real data.",
-        "Channel outro call to action (like, comment, subscribe, community link, and 1-on-1 booking link)."
+        "Prompt 2 builds the execution engine checking 1-minute bars and behavior tests comparing price action to random lines.",
+        "Engine specifications: 1 contract per trade, 1 position at a time per strategy, flat at 16:00 unless overnight holding allowed.",
+        "Transaction costs: $4 commission per round trip, 1 tick slippage on market entries, hard stops, close-based stops, and structure exits (no slippage on limits, targets, time/roll exits).",
+        "Tick sizes: NQ tick 0.25 ($20/point), ES tick 0.25 ($50/point). Ambiguous 1-minute bars hitting stop and target are counted as losses.",
+        "Random entries (20,000 trades) must average -$9.80 per trade after costs.",
+        "Behavioral tests perform 2,000 bootstrap resamples on 95% confidence intervals across NQ and ES."
+      ]
+    },
+    {
+      "start_ts": "00:16:22",
+      "end_ts": "00:16:26",
+      "topic": "The Five Prompts: Prompt 3 - The Funnel",
+      "key_points": [
+        "Prompt 3 filters tens of thousands of versions across a multi-stage funnel on discovery data.",
+        "Sample sets: 40,000 random versions (4,000 per setup), 6 named versions, 14,016 usual-settings versions, and 47,329 versions mirroring typical trader habits.",
+        "Funnel filter criteria on NQ: at least 38 trades, positive net P&L, Sharpe ratio >= 0.5, beating matched random trade sets (less than 5% of 10,000 twin sets beat it), and holding on ES with Sharpe >= 0.3."
+      ]
+    },
+    {
+      "start_ts": "00:16:26",
+      "end_ts": "00:16:32",
+      "topic": "The Five Prompts: Prompts 4 & 5 - Final Test and Dashboard",
+      "key_points": [
+        "Prompt 4 executes the single-run test on the sealed data window (2024-08-01 to 2024-10-16).",
+        "A setup holds up if it makes money after costs with a Sharpe ratio of 0.5 or higher on the sealed window.",
+        "Prompt 5 builds an automated 1920x1080 offline HTML presentation dashboard, enforcing full data provenance for every number shown."
+      ]
+    },
+    {
+      "start_ts": "00:16:32",
+      "end_ts": "00:17:10",
+      "topic": "Generalization and Closing",
+      "key_points": [
+        "The five-prompt method applies to any trading system or discretionary concept to test viability at scale with real data.",
+        "Closing call to like, comment, subscribe, and join the community link."
       ]
     }
   ],
   "claims": [
     {
-      "ts": "00:00:29",
-      "claim": "Trend continuation (break of structure) shows no statistically valid follow-through on any chart timeframe.",
-      "evidence_shown": "backtest",
-      "caveats": ""
-    },
-    {
       "ts": "00:02:02",
-      "claim": "Change of character (CHoCH) held up the best out of all tested price action concepts, performing best on the 4-hour chart.",
+      "claim": "Change of character (CHoCH) held up the best out of all price action setups tested, particularly on the 4-hour timeframe.",
       "evidence_shown": "backtest",
-      "caveats": "Specific Sharpe ratio, win rate, and return numbers are not detailed in this introductory segment."
+      "caveats": "Stated that higher timeframe charts yielded more consistent edge than lower timeframes."
     },
     {
       "ts": "00:02:24",
-      "claim": "Liquidity sweeps reverse only about half the time (~50%) and lack standalone edge without additional confluence.",
+      "claim": "Liquidity sweeps reverse back inside the level only about half the time, making them ineffective as a standalone entry signal.",
       "evidence_shown": "backtest",
-      "caveats": "Can be helpful as a confluence signal but not as an independent core entry system."
+      "caveats": "Can still be useful as a secondary filter or confirmation signal rather than an isolated trigger."
     },
     {
-      "ts": "00:03:00",
-      "claim": "Support and resistance levels beat random lines across timeframes from the 5-minute to daily charts.",
+      "ts": "00:07:05",
+      "claim": "Only ~8% (8,310 out of 101,345) of tested price action rule sets achieved a Sharpe ratio of 0.5+ after realistic transaction costs and slippage.",
       "evidence_shown": "backtest",
-      "caveats": ""
+      "caveats": "Results from NQ discovery period on 5 years of 1-minute bar data."
     },
     {
-      "ts": "00:07:28",
-      "claim": "Price action strategies rarely achieve 80%+ win rates, and win rate is poorly correlated with total profit.",
-      "evidence_shown": "backtest",
-      "caveats": "67 of the 138 high win-rate strategies used 1R targets, which skew win rate at the expense of payoff ratio."
+      "ts": "00:07:27",
+      "claim": "Win rate has a very weak correlation (0.27) to overall net profitability across 40,000 tested price action strategies.",
+      "evidence_shown": "data",
+      "caveats": "138 strategies achieved over 80% win rates, but nearly half (67) relied on small 1R profit targets."
     },
     {
-      "ts": "00:08:03",
-      "claim": "Friction from trading costs and slippage severely impairs 1-minute strategies compared to higher timeframes.",
-      "evidence_shown": "backtest",
-      "caveats": "Assumes standard futures commissions and slippage on every trade step."
+      "ts": "00:07:47",
+      "claim": "Win rate has very low correlation (0.27) with strategy profit across 40,000 strategies.",
+      "evidence_shown": "data",
+      "caveats": "Tested on NQ discovery dataset."
+    },
+    {
+      "ts": "00:08:06",
+      "claim": "Trading costs consume 46% of gross profit on the 1-minute chart, compared to only 3.9% on the daily chart.",
+      "evidence_shown": "data",
+      "caveats": "Reflects futures contract costs and commissions on NQ discovery tests."
     },
     {
       "ts": "00:08:42",
-      "claim": "Support and resistance levels have genuine statistical validity over random lines.",
-      "evidence_shown": "backtest",
-      "caveats": "Tested across timeframes from 5-minute to Daily on NQ and ES futures."
+      "claim": "Real support and resistance levels hold 51.1% of touches, outperforming random lines (42.4%).",
+      "evidence_shown": "data",
+      "caveats": "Tested on timeframes from 5m to daily on NQ and ES."
     },
     {
-      "ts": "00:09:01",
-      "claim": "Repeated touches do not make a support or resistance level stronger; levels with 4 touches hold less frequently than levels with 1 touch.",
-      "evidence_shown": "backtest",
-      "caveats": "Specific individual setups may succeed, but the aggregate tendency over 300M+ trades shows diminished holding rates with additional touches."
-    },
-    {
-      "ts": "00:09:53",
-      "claim": "Flip zones hold significantly better on first retest than ordinary support and resistance levels.",
-      "evidence_shown": "backtest",
-      "caveats": "Evaluated on first retest after a breakout."
-    },
-    {
-      "ts": "00:10:04",
-      "claim": "Flip zones are the strongest and most effective price action level concept.",
-      "evidence_shown": "backtest",
+      "ts": "00:09:02",
+      "claim": "Levels touched multiple times do not become stronger; 1-touch levels beat random lines by +9.0 pts while 4-touch levels beat random lines by +6.1 pts.",
+      "evidence_shown": "data",
       "caveats": ""
     },
     {
-      "ts": "00:10:15",
-      "claim": "Break of structure and change of character on their own do not move price or predict price direction.",
-      "evidence_shown": "backtest",
-      "caveats": ""
+      "ts": "00:09:54",
+      "claim": "Flip zones held 11.5 percentage points better than random lines on NQ and 10.9 points better on ES.",
+      "evidence_shown": "data",
+      "caveats": "Evaluated on the first retest."
     },
     {
       "ts": "00:10:26",
-      "claim": "Requiring a liquidity sweep before a change of character setup loses money in out-of-sample data.",
+      "claim": "Waiting for a liquidity sweep before a change of character lost $834, while trading CHoCH without a sweep gained $903.",
       "evidence_shown": "backtest",
-      "caveats": "Tested over two locked out-of-sample years on index futures."
+      "caveats": "Tested on unseen 2-year locked data."
     },
     {
       "ts": "00:10:46",
-      "claim": "Waiting for a confirmation candle rather than entering at the touch with a limit order improves net performance despite giving up 4.3 points of price.",
+      "claim": "Waiting for confirmation gives up 4.3 points of price entry but reduces losses by $719 per year compared to limit orders at touch.",
       "evidence_shown": "backtest",
-      "caveats": "Observed specifically on Nasdaq futures (NQ)."
+      "caveats": "Tested specifically on Nasdaq futures (NQ)."
     },
     {
       "ts": "00:11:08",
-      "claim": "Close-based stops achieve a higher win rate (40% vs 29%) but result in larger losses and poorer overall performance than hard stops.",
+      "claim": "Close-based stops cost $132 more per year than hard stops despite having a higher win rate (40% vs 29%).",
       "evidence_shown": "backtest",
       "caveats": ""
     },
     {
-      "ts": "00:11:26",
-      "claim": "Filtering trades to align with the daily trend significantly hurts price action setup performance.",
+      "ts": "00:12:53",
+      "claim": "A plain 4h CHoCH strategy generated $62,179 on NQ and $39,284 on ES across a 2-year locked out-of-sample period.",
       "evidence_shown": "backtest",
-      "caveats": ""
-    },
-    {
-      "ts": "00:12:06",
-      "claim": "Price action strategies have a substantially higher likelihood of being profitable on higher timeframes (4h, Daily) than on 1m or 5m charts.",
-      "evidence_shown": "backtest",
-      "caveats": ""
+      "caveats": "Single contract per market, 61 trades on NQ."
     },
     {
       "ts": "00:15:01",
-      "claim": "Mean reversion was the only strategy style that held up across 9,000 strategy variations, ICT sweep fading, and price action change-of-character tests.",
-      "evidence_shown": "backtest",
-      "caveats": "Performance figures represent the baseline 'floor' averaged across all unoptimized versions with 1 contract per trade, before adding sizing or risk management."
+      "claim": "Mean reversion was the only strategy style that held up out of thousands of variations tested in previous large-scale experiments.",
+      "evidence_shown": "data",
+      "caveats": "Represents baseline performance on 1 contract without custom risk management."
+    },
+    {
+      "ts": "00:16:13",
+      "claim": "The lab's full combinatorial space of valid parameter dial settings totals 20,265,402,666,000 variations.",
+      "evidence_shown": "data",
+      "caveats": "Nonsensical combinations (such as a 16:00 flat exit on a 4-hour setup) were removed."
     },
     {
       "ts": "00:16:18",
-      "claim": "A random entry baseline of 20,000 trades with a 1R ATR stop and 2R target loses approximately -$9.80 per trade after costs.",
+      "claim": "20,000 random market entries with a 1R stop and 2R target in the discovery period lost an average of -$9.80 per trade after costs.",
       "evidence_shown": "backtest",
-      "caveats": "Measured on discovery data with $4 commission and 1 tick slippage applied."
+      "caveats": "Evaluated on discovery window minutes."
     }
   ],
   "visuals": [
     {
       "ts": "00:00:16",
-      "type": "slide",
+      "type": "diagram",
       "title": "The Price Action Setup",
-      "axes_or_columns": [
-        "Concept",
-        "Finding / Annotation"
-      ],
+      "axes_or_columns": [],
       "values_readable": [
-        "2 / 66",
-        "levels, trend, entry, exit",
-        "1 level - beat random lines, 5m to daily",
+        "1 level - beat random lines, 1m to daily",
         "2 trend - x no follow-through, any chart",
-        "break of structure",
         "3 change of character - best setup, on the 4h",
         "4 sweep - x reversed about half the time",
         "5 confirmation - beat a limit at the level (NQ)",
-        "6 stop and target - hard stop beat close-based, target side: no edge",
+        "6 stop and target - hard stop beat close-based, target size: no edge",
         "THE SIX CHARTS: 1m, 5m, 15m, 1h, 4h, daily",
-        "higher chart, more versions made money"
+        "higher chart, more versions made money",
+        "break of structure",
+        "levels, trend, entry, exit",
+        "2 / 66"
       ],
-      "what_it_argues": "Summarizes the high-level findings across the 6 major components of classical price action setups.",
+      "what_it_argues": "Illustrates the visual components of a price action trade setup and summarizes key preliminary backtest takeaways for each component.",
       "confidence": "high"
     },
     {
       "ts": "00:00:29",
-      "type": "slide",
+      "type": "diagram",
       "title": "How We Tested It",
-      "axes_or_columns": [
-        "Category",
-        "Parameters / Metrics"
-      ],
+      "axes_or_columns": [],
       "values_readable": [
-        "6 / 66",
         "THE DIALS: touches, line or zone, confirmation, stop, target, chart, filters",
         "20.3 trillion possible versions",
         "WHAT WE RAN: 40,000 spread across every dial, 4,000 per setup",
@@ -385,111 +342,75 @@
         "101,345 total",
         "THE NAMED VERSIONS: Bare Minimum, Checklist, Entry Model, Zone System, Sweep System, Daily Version",
         "THE DATA: 5 years, 3.6M 1-minute bars, NQ + ES, 327M simulated trades",
-        "THE GAUNTLET: real costs, every trade; slippage on every stop; ambiguous candle = a loss; vs random lines; vs random trades; checked on ES; 2 years locked away"
+        "THE GAUNTLET: real costs, every trade; slippage on every stop; ambiguous candle = a loss; vs random times; vs random trades; checked on ES; 2 years locked away",
+        "6 / 66"
       ],
-      "what_it_argues": "Shows the backtesting scale, parameter permutation scope (20.3T), executed sample sizes (101,345), and robustness checks applied.",
+      "what_it_argues": "Details the experimental design, dataset scale, combinatorial space, and execution constraints used in the automated testing framework.",
       "confidence": "high"
     },
     {
       "ts": "00:00:37",
-      "type": "slide",
+      "type": "diagram",
       "title": "The Ten Setups",
-      "axes_or_columns": [
-        "Setup Number",
-        "Setup Name",
-        "Description"
-      ],
+      "axes_or_columns": [],
       "values_readable": [
-        "3 / 66",
+        "1 Level bounce - buy support, sell resistance",
+        "2 Breakout - trade the close through a level",
+        "3 Flip zone - old resistance becomes support",
+        "4 Trend pullback - buy the first dip in an uptrend",
+        "5 Trend line - buy a touch of the rising line",
+        "6 Break of structure - go with the break of the last swing",
+        "7 Change of character - the first break against the trend",
+        "8 Sweep and reclaim - a wick through a low, closed back above",
+        "9 Supply and demand - the first return to an impulse's base",
+        "10 Fair value gap - the first return into a three-candle gap",
         "the ten we tested",
-        "1. Level bounce - buy support, sell resistance",
-        "2. Breakout - trade the close through a level",
-        "3. Flip zone - old resistance becomes support",
-        "4. Trend pullback - buy the first dip in an uptrend",
-        "5. Trend line - buy a touch of the rising line",
-        "6. Break of structure - go with the break of the last swing",
-        "7. Change of character - the first break against the trend",
-        "8. Sweep and reclaim - a wick through a low, closed back above",
-        "9. Supply and demand - the first return to an impulse's base",
-        "10. Fair value gap - the first return into a three-candle gap"
+        "3 / 66"
       ],
-      "what_it_argues": "Defines the 10 standard price action patterns subjected to systematic backtesting.",
+      "what_it_argues": "Visual overview of the ten canonical price action patterns formalized and tested across the dataset.",
       "confidence": "high"
     },
     {
       "ts": "00:04:12",
-      "type": "slide",
+      "type": "chart",
       "title": "Drawn By Eye",
       "axes_or_columns": [
-        "Chart Label",
-        "Rule Category",
-        "Algorithmic Rule"
+        "Time",
+        "NQ Price (16,200 to 16,350)"
       ],
       "values_readable": [
-        "5 / 66",
-        "same chart, different lines",
         "NQ 15m, Jul 7, 2023, discovery",
-        "AS RULES",
-        "Level: 2+ swings within 0.25 ATR",
-        "Touch: within 0.25 ATR of the level",
-        "Confirmation: a close back across it",
-        "Trader A: limit at the touch",
-        "Trader B: close back across"
+        "Trader A - limit at the touch",
+        "Trader B - close back across",
+        "AS RULES: Level: 2+ swings within 0.25 ATR, Touch: within 0.25 ATR of the level, Confirmation: a close back across it",
+        "same chart, different lines",
+        "5 / 66"
       ],
-      "what_it_argues": "Illustrates how subjective human line drawing leads to conflicting trades and demonstrates the mathematical ATR-based rules used to formalize levels.",
-      "confidence": "high"
-    },
-    {
-      "ts": "00:05:00",
-      "type": "slide",
-      "title": "How We Tested It",
-      "axes_or_columns": [
-        "THE DIALS",
-        "WHAT WE RAN",
-        "THE DATA",
-        "THE GAUNTLET"
-      ],
-      "values_readable": [
-        "6 / 55",
-        "touches",
-        "line or zone",
-        "confirmation",
-        "stop",
-        "target",
-        "chart",
-        "filters",
-        "20.3 trillion possible versions",
-        "40,000 spread across every dial, 4,000 per setup",
-        "61,345 common versions: usual settings, 0 to 2 filters",
-        "101,345 total",
-        "THE NAMED VERSIONS: Bare Minimum, Checklist, Entry Model, Zone System, Sweep System, Daily Version",
-        "THE DATA: 5 years, 3.6M 1-minute bars, NQ + ES, 327M simulated trades",
-        "THE GAUNTLET: real costs, every trade; slippage on every step; ambiguous candle = a loss; vs random lines; vs random trades; checked on ES; 2 years locked away"
-      ],
-      "what_it_argues": "Summarizes the rigorous quantitative methodology and parameter space used to test price action trading rules at institutional scale.",
+      "what_it_argues": "Demonstrates why discretionary price action trading lacks consistency and how mathematical rules (ATR tolerance) were applied to standardize subjective interpretations.",
       "confidence": "high"
     },
     {
       "ts": "00:06:59",
       "type": "chart",
-      "title": "Funnel",
+      "title": "FUNNEL",
       "axes_or_columns": [
-        "Funnel Stage",
-        "Original 40,000",
-        "Common versions"
+        "Stage",
+        "Count of Strategy Versions"
       ],
       "values_readable": [
-        "8 / 55",
         "All 101,346 versions through each stage, NQ discovery",
+        "Original 40,000",
+        "Common versions",
         "All: 101,345",
         "Enough trades to grade (30+): 88,986",
         "Profitable: 24,879",
         "Sharpe 0.5+: 8,310",
         "101,345 TESTED",
         "24,879 MADE MONEY AFTER COSTS",
-        "24,879 of the 101,345 versions made money after costs in discovery, and 8,310 had a Sharpe of 0.5+"
+        "24,879 of the 101,345 versions made money after costs in discovery, and 8,310 had a Sharpe of 0.5+",
+        "8 / 66"
       ],
-      "what_it_argues": "Demonstrates the proportion of price action strategies that remain profitable and produce viable risk-adjusted returns after trade costs.",
+      "what_it_argues": "Presents attrition rates of price action strategies from raw tested models down to those meeting minimum trade count, net profitability after costs, and Sharpe > 0.5.",
       "confidence": "high"
     },
     {
@@ -497,27 +418,46 @@
       "type": "chart",
       "title": "Win Rate And Profit",
       "axes_or_columns": [
-        "X-axis: WIN RATE",
-        "Y-axis: Result per contract per year (k$)"
+        "Win Rate (%)",
+        "Result Per Contract Per Year ($0 to $40k)"
       ],
       "values_readable": [
-        "9 / 55",
         "40,000 strategies by win rate and result per contract per year, NQ discovery",
         "5R",
         "4R",
         "3R",
+        "2R",
         "Next",
         "2R",
         "1.5R",
         "1R",
-        "Y-axis ticks: -$20k, -$10k, $0, $10k, $20k, $30k",
-        "X-axis ticks: 0%, 20%, 40%, 60%, 80%, 100%",
+        "80%+",
         "138 WIN 80%+",
         "0.27 CORRELATION",
         "67 of the 138 use a 1R target",
+        "138 strategies won 80%+ of their trades; across all 40,000 win rate barely tracks profit (correlation 0.27)",
+        "9 / 66"
+      ],
+      "what_it_argues": "Scatter plot showing that win rate has negligible correlation (0.27) with annual dollar return per contract, dispelling high win-rate marketing claims.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:07:30",
+      "type": "chart",
+      "title": "Win Rate And Profit",
+      "axes_or_columns": [
+        "X: WIN RATE (0% to 100%)",
+        "Y: Result per contract per year ($0k, $5k, $10k, $15k)"
+      ],
+      "values_readable": [
+        "40,000 strategies by win rate and result per contract per year, NQ discovery",
+        "138 WIN 80%+",
+        "0.27 CORRELATION",
+        "67 of the 138 use a 1R target",
+        "80%+",
         "138 strategies won 80%+ of their trades; across all 40,000 win rate barely tracks profit (correlation 0.27)"
       ],
-      "what_it_argues": "Proves that win rate has very low correlation with annual net profit and that 80%+ win rates are rare anomalies that mostly stem from small 1R targets.",
+      "what_it_argues": "High win rates are rare and win rate does not correlate strongly with net profitability.",
       "confidence": "high"
     },
     {
@@ -526,21 +466,19 @@
       "title": "Timeframes",
       "axes_or_columns": [
         "Timeframe (1m, 5m, 15m, 1h, 4h, Daily)",
-        "PROFITABLE VERSIONS",
-        "COSTS / GROSS PROFIT",
-        "MEDIAN PER YEAR"
+        "PROFITABLE VERSIONS (%)",
+        "COSTS / GROSS PROFIT (%)",
+        "MEDIAN PER YEAR ($)"
       ],
       "values_readable": [
-        "10 / 55",
-        "All 40,000 by setup chart, NQ discovery",
-        "PROFITABLE VERSIONS: 1m: 32%, 5m: 36%, 15m: 44%, 1h: 46%, 4h: 47%, Daily: 47%",
-        "COSTS / GROSS PROFIT: 1m: 46%, 5m: 38%, 15m: 24%, 1h: 9%, 4h: 6%, Daily: 4%",
-        "MEDIAN PER YEAR: 1m: -$428k, 5m: -$308k, 15m: -$210k, 1h: -$4k, 4h: +$3k, Daily: +$6k",
+        "PROFITABLE VERSIONS: 1m: 32%, 5m: 36%, 15m: 44%, 1h: 47%, 4h: 48%, Daily: 47%",
+        "COSTS / GROSS PROFIT: 1m: 46%, 5m: 38%, 15m: 24%, 1h: 11%, 4h: 6%, Daily: 4%",
+        "MEDIAN PER YEAR: 1m: -$306, 5m: -$310, 15m: -$309, 1h: -$418, 4h: -$426, Daily: -$405",
         "46.0% COSTS ON 1M",
         "3.9% COSTS ON DAILY",
         "Costs take 46.0% of gross profit on the 1m chart and 3.9% on daily"
       ],
-      "what_it_argues": "Shows that lower timeframes fail largely because execution friction and transaction costs consume a huge fraction of gross profits.",
+      "what_it_argues": "Transaction costs heavily erode profitability on lower timeframes like 1m, whereas higher timeframes preserve gross profits.",
       "confidence": "high"
     },
     {
@@ -548,25 +486,22 @@
       "type": "chart",
       "title": "Random Lines",
       "axes_or_columns": [
-        "Chart timeframe (All, 5m, 15m, 1h, 4h, Daily)",
-        "Real levels",
-        "Random lines",
-        "Share of touches that hold (%)"
+        "Timeframes (All, 5m, 15m, 1h, 4h, Daily)",
+        "Share of touches that hold, real levels vs random lines, NQ discovery (%)"
       ],
       "values_readable": [
-        "11 / 55",
-        "Share of touches that hold, real levels vs random lines, NQ discovery",
-        "All: Real levels 51%, Random lines 42%",
-        "5m: Real levels 52%, Random lines 43%",
-        "15m: Real levels 50%, Random lines 43%",
-        "1h: Real levels 48%, Random lines 40%",
-        "4h: Real levels 47%, Random lines 38%",
-        "Daily: Real levels 51%, Random lines 33%",
+        "Real levels (cyan) vs Random lines (grey)",
+        "All: 51% vs 42%",
+        "5m: 52% vs 43%",
+        "15m: 50% vs 43%",
+        "1h: 48% vs 40%",
+        "4h: 47% vs 38%",
+        "Daily: 51% vs 33%",
         "+8.7 pts NQ",
         "+8.5 pts ES",
-        "SURVIVED REAL levels hold 51.1% of touches against 42.4% for random lines, on every chart from 5m to daily"
+        "SURVIVED Real levels hold 51.1% of touches against 42.4% for random lines, on every chart from 5m to daily"
       ],
-      "what_it_argues": "Provides empirical evidence that horizontal support and resistance levels hold significantly better than chance across all tested timeframes.",
+      "what_it_argues": "Technical support and resistance levels hold significantly more frequently than randomly placed horizontal lines.",
       "confidence": "high"
     },
     {
@@ -575,21 +510,19 @@
       "title": "Touch Count",
       "axes_or_columns": [
         "Number of touches (1 touch, 2 touches, 3 touches, 4 touches)",
-        "Holding advantage vs random lines (percentage points)"
+        "Points better than random lines"
       ],
       "values_readable": [
-        "12 / 55",
-        "How much better than random lines a level holds, by number of touches",
         "1 touch: +9.0 pts",
         "2 touches: +7.8 pts",
         "3 touches: +8.2 pts",
         "4 touches: +6.1 pts",
         "+9.0 pts ONE TOUCH",
         "+6.1 pts FOUR TOUCHES",
-        "DIDN'T SURVIVE A level touched four times held no better than a level touched once; levels touched 3+ times bounced a bit less and broke through a bit more",
-        "3+ touches vs 1 touch: bounced 19.2% vs 20.5%, broke and kept going 27.8% vs 26.1%"
+        "3+ touches vs 1 touch: bounced 19.2% vs 20.5%, broke and kept going 27.8% vs 26.1%",
+        "DIDN'T SURVIVE A level touched four times held no better than a level touched once; levels touched 3+ times bounced a bit less and broke through a bit more"
       ],
-      "what_it_argues": "Disproves the common price action heuristic that more touches make support/resistance stronger.",
+      "what_it_argues": "Repeatedly touching a support/resistance level weakens it rather than strengthens it.",
       "confidence": "high"
     },
     {
@@ -598,43 +531,19 @@
       "title": "Level Rules",
       "axes_or_columns": [
         "Rule",
-        "Percentage points vs comparison (95% intervals)"
+        "Percentage points relative to comparison (95% intervals)"
       ],
       "values_readable": [
-        "13 / 55",
-        "Each rule against its comparison, percentage points, 95% intervals",
         "Touch count: -1.1 pts",
         "Wall at 3+ touches: -1.3 pts",
         "Weaker pushes: +0.4 pts",
         "Box vs line: +0.5 pts",
         "Flip zones: +11.5 pts",
-        "+11.5 pts FLIP ZONES",
+        "+11.5 pts FLIP ZONES, NQ",
         "+10.9 pts FLIP ZONES, ES",
         "Flip zones hold; touch count, walls and weaker pushes do not"
       ],
-      "what_it_argues": "Isolates the predictive power of various level rules, showing flip zones provide strong statistical edge while touch-count rules degrade performance.",
-      "confidence": "high"
-    },
-    {
-      "ts": "00:10:00",
-      "type": "chart",
-      "title": "Level Rules",
-      "axes_or_columns": [
-        "Rule",
-        "Percentage points, 95% intervals (-5 to +10)"
-      ],
-      "values_readable": [
-        "Touch count: -1.1 pts",
-        "Wall at 3+ touches: -1.3 pts",
-        "Weaker pushes: +0.4 pts",
-        "Box vs line: +0.5 pts",
-        "Flip zones: +11.5 pts",
-        "+11.5 pts FLIP ZONES",
-        "+10.9 pts FLIP ZONES, ES",
-        "Flip zones hold; touch count, walls and weaker pushes do not",
-        "13 / 67"
-      ],
-      "what_it_argues": "Flip zones provide a massive statistical advantage over touch counts and walls at support/resistance.",
+      "what_it_argues": "Flip zones provide substantial edge over random lines, whereas touch counts and wall rules detract from performance.",
       "confidence": "high"
     },
     {
@@ -642,18 +551,17 @@
       "type": "chart",
       "title": "Follow-Through",
       "axes_or_columns": [
-        "Break type",
-        "ATR (-0.40 to +0.40)"
+        "Setup",
+        "Follow-through (ATR)"
       ],
       "values_readable": [
         "Break of structure: -0.04 ATR",
         "Change of character: -0.05 ATR",
         "-0.04 ATR BREAK OF STRUCTURE",
         "-0.05 ATR CHANGE OF CHARACTER",
-        "DIDN'T SURVIVE Neither break moved price on its own",
-        "15 / 67"
+        "DIDN'T SURVIVE Neither break moved price on its own"
       ],
-      "what_it_argues": "Neither BOS nor CHoCH alone yields positive directional follow-through measured in ATR.",
+      "what_it_argues": "Raw break of structure and change of character signals do not generate positive price follow-through in isolation.",
       "confidence": "high"
     },
     {
@@ -662,18 +570,17 @@
       "title": "Trend Setups",
       "axes_or_columns": [
         "Setup",
-        "Median Profit/Loss ($)"
+        "Median result ($)"
       ],
       "values_readable": [
         "BOS continuation: -$328",
         "CHoCH reversal: +$61",
         "Sweep and reclaim: -$368",
         "Trend line: -$479",
-        "+$61, +$47 CHOCH MEDIAN",
-        "Only the change of character had a positive median",
-        "16 / 67"
+        "+$61 CHOCH MEDIAN",
+        "Only the change of character had a positive median"
       ],
-      "what_it_argues": "Only CHoCH reversal had a positive median among classic trend trading setups.",
+      "what_it_argues": "Change of character reversal is the only trend setup tested with a positive median annual outcome.",
       "confidence": "high"
     },
     {
@@ -681,8 +588,8 @@
       "type": "chart",
       "title": "Trend Trades As Taught",
       "axes_or_columns": [
-        "Setup variation",
-        "Performance ($)"
+        "Setup variant",
+        "Annual performance ($)"
       ],
       "values_readable": [
         "Trend line, first to second low: -$586",
@@ -692,10 +599,9 @@
         "Late entry on a 5m break: -$2,608",
         "+$903 NO SWEEP, UNSEEN",
         "-$834 AFTER A SWEEP",
-        "Only the change of character without a sweep made money",
-        "17 / 67"
+        "Only the change of character without a sweep made money"
       ],
-      "what_it_argues": "Conventional teachings that require a liquidity sweep before a trend reversal underperform simple CHoCH entries without a sweep.",
+      "what_it_argues": "Conventional teaching that requires a liquidity sweep before trading a change of character destroys performance.",
       "confidence": "high"
     },
     {
@@ -703,18 +609,17 @@
       "type": "chart",
       "title": "Confirmation Tax",
       "axes_or_columns": [
-        "Entry method",
-        "Performance ($)"
+        "Entry style",
+        "Annual edge ($)"
       ],
       "values_readable": [
         "Limit at the touch: -$1,093",
         "After confirmation: -$373",
         "+$719 EDGE PER YEAR",
         "4.3 POINTS GIVEN UP",
-        "SURVIVED Waiting for confirmation lost less than a limit at the touch",
-        "18 / 67"
+        "SURVIVED Waiting for confirmation lost less than a limit at the touch"
       ],
-      "what_it_argues": "Waiting for confirmation improves performance by $719/year despite giving up 4.3 index points.",
+      "what_it_argues": "Waiting for a confirmation candle gives up 4.3 points of entry but outperforms blind limit orders by $719/year.",
       "confidence": "high"
     },
     {
@@ -722,17 +627,16 @@
       "type": "chart",
       "title": "Stops",
       "axes_or_columns": [
-        "Stop method",
-        "Performance ($)"
+        "Stop type",
+        "Performance per year ($)"
       ],
       "values_readable": [
         "Hard stop: -$158",
         "Close-based stop: -$290",
         "-$132 CLOSE STOPS, PER YEAR",
-        "DIDN'T SURVIVE Close-based stops cost $132 a year more",
-        "19 / 67"
+        "DIDN'T SURVIVE Close-based stops cost $132 a year more"
       ],
-      "what_it_argues": "Close-based stops cost more money annually than conventional hard stops.",
+      "what_it_argues": "Hard stops outperform close-based stops because close-based stops incur much larger tail losses.",
       "confidence": "high"
     },
     {
@@ -740,8 +644,8 @@
       "type": "chart",
       "title": "Context",
       "axes_or_columns": [
-        "Filter condition",
-        "Performance ($)"
+        "Context filter",
+        "Performance per year ($)"
       ],
       "values_readable": [
         "New York only (8am to 4pm ET): +$270",
@@ -749,10 +653,9 @@
         "Daily trend agrees: -$587",
         "+$270 NEW YORK ONLY, UNSEEN NQ",
         "-$587 DAILY TREND, UNSEEN NQ",
-        "New York hours and skipping 3+ day runs helped. The daily trend filter hurt",
-        "22 / 67"
+        "New York hours and skipping 3+ day runs helped. The daily trend filter hurt"
       ],
-      "what_it_argues": "New York session filtering and avoiding multi-day extended runs improve returns, while filtering by daily trend drastically hurts returns.",
+      "what_it_argues": "Session timing and run filters improve returns, while daily trend alignment reduces edge.",
       "confidence": "high"
     },
     {
@@ -760,24 +663,20 @@
       "type": "table",
       "title": "Passed On Both Markets",
       "axes_or_columns": [
-        "Market (NQ, ES)",
-        "Subset (Original 40,000, Common Versions)",
-        "Strategy Name",
-        "A YEAR ($)"
+        "Market",
+        "Setup Group",
+        "Setup Name",
+        "Annual Return ($)"
       ],
       "values_readable": [
-        "NQ / Original 40,000 / change of character 1h: +$1,208",
-        "NQ / Original 40,000 / change of character 4h: +$4,025",
-        "NQ / Common versions / change of character 4h: +$4,884",
-        "NQ / Common versions / flip zone daily: +$9,093",
-        "ES / Original 40,000 / change of character 4h: +$4,146",
-        "ES / Common versions / change of character 4h: +$3,374",
-        "ES / Common versions / breakout daily: +$1,734",
+        "NQ Original 40,000: change of character 1h (+$1,208), change of character 4h (+$4,025)",
+        "NQ Common Versions: change of character 4h (+$4,884), flip zone daily (+$9,093)",
+        "ES Original 40,000: change of character 4h (+$4,146)",
+        "ES Common Versions: change of character 4h (+$3,374), breakout daily (+$1,734)",
         "4 of 4 CHOCH 4H PASSED IN EACH SET AND ON EACH MARKET",
-        "Only the 4h change of character passed on both markets",
-        "23 / 67"
+        "Only the 4h change of character passed on both markets"
       ],
-      "what_it_argues": "The 4h change of character was the only setup that consistently passed across both NQ and ES in all tested sets.",
+      "what_it_argues": "The 4-hour change of character is the only price action setup that consistently succeeded across both NQ and ES in both discovery and common version sets.",
       "confidence": "high"
     },
     {
@@ -785,19 +684,18 @@
       "type": "chart",
       "title": "Final Window",
       "axes_or_columns": [
-        "Time (2025 - 2026)",
-        "Price (16,000 to 30,000)"
+        "X: Year (2025, 2026)",
+        "Y: Price (14,000 to 30,000)"
       ],
       "values_readable": [
-        "22,235",
-        "17,232",
-        "30,078",
+        "High 22,235",
+        "Low 17,232",
+        "Peak 30,078",
         "-22.5% SELLOFF",
         "+74.5% RALLY",
-        "The locked years held a 22.5% drop and a 74.5% rally",
-        "24 / 67"
+        "The locked years held a 22.5% drop and a 74.5% rally"
       ],
-      "what_it_argues": "The locked forward test window was a rigorous testing ground containing both a severe selloff (-22.5%) and a large rally (+74.5%).",
+      "what_it_argues": "The 2-year out-of-sample test window provided diverse market regimes, including a major selloff and rally.",
       "confidence": "high"
     },
     {
@@ -806,7 +704,7 @@
       "title": "Timeframe Ladder",
       "axes_or_columns": [
         "Timeframe (1m, 5m, 15m, 1h, 4h, Daily)",
-        "Percentage making money (0% to 50%)"
+        "Profitable versions (%)"
       ],
       "values_readable": [
         "1m: 9.2%",
@@ -817,10 +715,9 @@
         "Daily: 47.9%",
         "9% MADE MONEY, 1M, NQ",
         "45% MADE MONEY, 4H, NQ",
-        "The higher the chart, the more versions made money",
-        "25 / 67"
+        "The higher the chart, the more versions made money"
       ],
-      "what_it_argues": "Profitability rate increases monotonically with higher timeframes.",
+      "what_it_argues": "Out-of-sample robustness rises directly with timeframe from 9% on 1m to 48% on daily.",
       "confidence": "high"
     },
     {
@@ -828,17 +725,16 @@
       "type": "chart",
       "title": "Best Version",
       "axes_or_columns": [
-        "Time (2023 - 2026)",
-        "Account Equity ($0k to $300k)"
+        "X: Time (2023, 2024, 2025, 2026)",
+        "Y: Cumulative Profit ($0k to $300k)"
       ],
       "values_readable": [
         "+$62,179 LOCKED YEARS, NQ",
         "+$39,284 LOCKED YEARS, ES",
         "61 trades on NQ, 54% winners",
-        "Picked in discovery, it made money on both markets in the locked years",
-        "29 / 67"
+        "Picked in discovery, it made money on both markets in the locked years"
       ],
-      "what_it_argues": "The best 4h CHoCH model produced stable equity curves in out-of-sample locked data across both NQ and ES.",
+      "what_it_argues": "The 4h CHoCH strategy remained profitable out-of-sample on both NQ and ES without overfitting.",
       "confidence": "high"
     },
     {
@@ -846,18 +742,18 @@
       "type": "table",
       "title": "The 4h Setup",
       "axes_or_columns": [
-        "Metric / Segment",
-        "Result"
+        "Metric",
+        "Value"
       ],
       "values_readable": [
         "39 of 48 versions on its usual settings made money, NQ",
         "66% of all 314 common versions made money, NQ",
-        "+$17,041 New York session versions, average per contract (original 40,000, NQ), still made money without their 10 best days",
+        "+$17,041 New York session versions, average per contract (original 40,000, NQ); still made money without their 10 best days",
         "54.5% of the common versions made money on ES",
-        "In the original 40,000, most of the gain came from a few big days",
-        "30 / 67"
+        "the two locked years",
+        "In the original 40,000, most of the gain came from a few big days"
       ],
-      "what_it_argues": "The 4h CHoCH setup demonstrates robust performance across a large swath of parameter variations.",
+      "what_it_argues": "The 4h setup displays high parameter stability and broad profitability across hundreds of variations.",
       "confidence": "high"
     },
     {
@@ -866,19 +762,18 @@
       "title": "What Survived",
       "axes_or_columns": [
         "Rule Number",
-        "Rule Description"
+        "Description"
       ],
       "values_readable": [
-        "1 Change of character, 4h chart",
-        "2 Higher charts (made money: 9% on 1m, 48% on daily (common versions, unseen NQ))",
-        "3 New York session only",
-        "4 Skip trades into a 3+ day run",
-        "5 Confirmation candle (NQ)",
-        "6 Hard stop, not close-based",
-        "7 No sweep before the change",
-        "33 / 67"
+        "1. Change of character, 4h chart",
+        "2. Higher charts (made money: 9% on 1m, 48% on daily; common versions, unseen NQ)",
+        "3. New York session only",
+        "4. Skip trades into a 3+ day run",
+        "5. Confirmation candle (NQ)",
+        "6. Hard stop, not close-based",
+        "7. No sweep before the change"
       ],
-      "what_it_argues": "Summarizes the seven robust price action trading rules identified by the study.",
+      "what_it_argues": "Summary of the 7 quantitative principles that survived rigorous in-sample and out-of-sample backtesting.",
       "confidence": "high"
     },
     {
@@ -886,8 +781,8 @@
       "type": "chart",
       "title": "Example Trade",
       "axes_or_columns": [
-        "Time (Jul 2 - Jul 18, 2024)",
-        "Price (19,600 to 21,000)"
+        "X: Date (Jul 2, Jul 4, Jul 9, Jul 11, Jul 16, Jul 18)",
+        "Y: Price (19,800 to 21,000)"
       ],
       "values_readable": [
         "NQ 4h, July 11, 2024",
@@ -895,10 +790,9 @@
         "Change of character",
         "Stop",
         "Entry",
-        "Target",
-        "34 / 67"
+        "Target"
       ],
-      "what_it_argues": "Visual demonstration of the exact 4h CHoCH execution: trend break, entry at candle close, hard stop at swing high, and 1:1 risk-to-reward target.",
+      "what_it_argues": "Illustration of the surviving strategy execution on a 4-hour NQ short trade.",
       "confidence": "high"
     },
     {
@@ -913,10 +807,9 @@
         "9,000 strategies: mean reversion",
         "ICT: fading the sweep",
         "Price action: the 4h change of character",
-        "the floor, not the ceiling",
-        "35 / 67"
+        "the floor, not the ceiling"
       ],
-      "what_it_argues": "The empirical findings across various trading styles consistently point to mean reversion and reversal behaviors as robust baseline edges.",
+      "what_it_argues": "Independent testing across multiple trading frameworks converges on similar core principles.",
       "confidence": "high"
     },
     {
@@ -926,34 +819,29 @@
       "axes_or_columns": [],
       "values_readable": [
         "35 / 67",
-        "9,000 strategies / mean reversion",
-        "ICT / fading the sweep",
-        "Price action / the 4h change of character",
+        "9,000 strategies: mean reversion",
+        "ICT: fading the sweep",
+        "Price action: the 4h change of character",
         "the floor, not the ceiling"
       ],
-      "what_it_argues": "Summarizes the consistent finding across all tests that mean-reversion setups survive backtesting.",
+      "what_it_argues": "Mean reversion and reversal mechanics are the recurring survivors across disparate trading methodology backtests.",
       "confidence": "high"
     },
     {
       "ts": "00:15:56",
       "type": "slide",
-      "title": "PRICE ACTION LAB · THE FIVE PROMPTS / Build it yourself",
-      "axes_or_columns": [
-        "Prompt Number",
-        "Title",
-        "Page"
-      ],
+      "title": "PRICE ACTION LAB / THE FIVE PROMPTS / Build it yourself",
+      "axes_or_columns": [],
       "values_readable": [
         "1 / 16",
+        "screenshot these and run them in order, one at a time",
         "1 Data and dials page 2",
         "2 Engine and level tests page 6",
         "3 The funnel page 10",
         "4 The final test page 13",
-        "5 The dashboard page 15",
-        "screenshot these and run them in order, one at a time",
-        "paste each block into Claude Code, in order, one at a time"
+        "5 The dashboard page 15"
       ],
-      "what_it_argues": "Provides the overview structure of the five prompts required to build the automated price action lab.",
+      "what_it_argues": "Outlines the five-prompt architecture for building the research lab.",
       "confidence": "high"
     },
     {
@@ -963,52 +851,73 @@
       "axes_or_columns": [],
       "values_readable": [
         "2 / 16",
-        "WHAT THIS BUILDS: A Python research lab that turns price action trading rules into exact rules a computer can test on NQ and ES futures...",
-        "RULES: Work in one project folder with a Python virtual environment. Save every result as a file, and log each decision and its reason in decisions.md. Fix a master seed... The final window stays sealed... Never move a threshold after seeing a result...",
-        "INPUTS: 1-minute NQ and ES continuous front-month futures... Copy each unchanged into data/raw/ and record its sha256... ts_event, open, high, low, close, volume, contract..."
+        "WHAT THIS BUILDS",
+        "A python research lab that turns price action trading rules into exact rules a computer can test on NQ and ES futures...",
+        "RULES",
+        "Work in one project folder with a Python virtual environment. Save every result as a file, and log each decision and its reason in decisions.md.",
+        "Write a master seed for every random draw...",
+        "The final window stays sealed...",
+        "Never move a threshold after seeing a result...",
+        "INPUTS",
+        "1-minute NQ and ES continuous front-month futures...",
+        "sha256",
+        "ts_event, open, high, low, close, volume, contract",
+        "tick-size file per market with roll_time_utc, old_contract, new_contract and spread"
       ],
-      "what_it_argues": "Specifies environment setup, data ingestion rules, and cryptographic hashing for Prompt 1.",
+      "what_it_argues": "Defines Prompt 1 system setup, reproducibility rules, and raw data inputs.",
       "confidence": "high"
     },
     {
-      "ts": "00:16:09",
+      "ts": "00:16:10",
       "type": "slide",
-      "title": "PROMPT 1 OF 5 · CONTINUED",
+      "title": "PROMPT 1 OF 5 - CONTINUED",
       "axes_or_columns": [],
       "values_readable": [
         "3 / 16",
-        "CLEAN AND CHECK: Convert to America/New_York. Session 18:00 to 17:00 ET dated by end day. Audit duplicates, inverted high/low, missing minutes, 17:00 halt hour drop. Back-adjusted bars for signals/fills. No entries 60m before roll. News calendar of CPI, Jobs report, FOMC.",
-        "WINDOWS: Warm-up: 2021-10-01 to 2021-12-31; Discovery: 2022-01-03 to 2024-07-31 (Era 1: 2022, Era 2: 2023 to July 2024); Final: 2024-08-01 to latest (data 2026-10-16 here) sealed with sha256 manifest and file reader guard."
+        "CLEAN AND CHECK",
+        "Convert to America/New_York. A session runs 18:00 to 17:00 ET...",
+        "Audit every file... duplicate timestamps, time jumps of more than 1 minute during liquid hours (09:30-16:00 ET)...",
+        "WINDOWS",
+        "Warm-up: 2021-10-01 to 2021-12-31",
+        "Discovery: 2022-01-03 to 2024-07-31 (Era 1: 2022, era 2: 2023 to July 2024)",
+        "Sealed: 2024-08-01 to the last day of the data (2024-10-16 here)"
       ],
-      "what_it_argues": "Specifies data cleaning protocols, session times, and strict train/discovery/sealed out-of-sample date windows.",
+      "what_it_argues": "Defines strict chronological data windows and cleaning procedures.",
       "confidence": "high"
     },
     {
       "ts": "00:16:11",
       "type": "slide",
-      "title": "PROMPT 1 OF 5 · CONTINUED",
+      "title": "PROMPT 1 OF 5 - CONTINUED",
       "axes_or_columns": [],
       "values_readable": [
         "4 / 16",
-        "CHARTS: Build 5m, 15m, 1h, 4h and daily bars from 1-minute bars from 18:00 open. 4h bars: 18-22, 22-02, 02-06, 06-10, 10-14, 14-17 ET. Higher timeframe bar usable only from its close. ATR is Wilder's 14-bar ATR.",
-        "THE DIALS: Ten setups: level bounce, breakout, flip zone, trend pullback, trend line, break of structure continuation, change of character reversal, sweep and reclaim, supply and demand zone, fair value gap.",
-        "Six setup charts (5m, 15m, 1h, 4h, daily) with trigger charts. Swing strength 2, 3, 5, 8. Level clusters within 0.1, 0.25, 0.5 ATR (1-4 touches). Supply/demand zones 2-5 candles covering 1.5-3 ATR. Three-candle FVG."
+        "CHARTS",
+        "Build 5m, 15m, 1h, 4h and daily bars from 1-minute bars...",
+        "Wilder's 14-bar ATR",
+        "THE DIALS",
+        "Ten setups: level bounce, breakout, flip zone, trend pullback, trend line, break of structure continuation, change of character reversal, sweep and reclaim, supply and demand zone, fair value gap.",
+        "Six setup charts: 5m, 15m, 1h, 4h, daily...",
+        "Ten detector dials: peak and valley strength of 2, 3, 5 or 8...",
+        "clusters of swings within 0.1, 0.25 or 0.5 ATR, needing 1 to 4 touches...",
+        "supply and demand zones from runs of 2 to 5 candles covering 1.5 to 3 ATR"
       ],
-      "what_it_argues": "Defines multi-timeframe bar creation and parameterizes 10 price action setups into granular dials.",
+      "what_it_argues": "Lists the technical dials and timeframe definitions for all price action rules.",
       "confidence": "high"
     },
     {
       "ts": "00:16:13",
       "type": "slide",
-      "title": "PROMPT 1 OF 5 · CONTINUED",
+      "title": "PROMPT 1 OF 5 - CONTINUED",
       "axes_or_columns": [],
       "values_readable": [
         "5 / 16",
-        "Shared dials: direction (confirmation, none, close back, rejection wick, engulfing, either candle, lower-chart break of structure); entry (close of trigger bar, limit, stop, closed-base stop); buffer 0, 0.1, 0.25 ATR; target 1R, 1.5R, 2R, 3R, 5R, 10R, next swing, hold, CHoCH; time exit 16:00, 16:40, 24 or 96 bars.",
-        "Filters: trend agrees, skip choppy days, skip direction of 3/5 day run, fresh breakouts, news days, session (all, London/NY, NY open 08:30-11:00, NY open 09:30-11:00), pullback depth, gap confluence.",
-        "Total valid combinations: 20,265,402,668,000."
+        "Shared dials: direction; confirmation... stop: touch wick, last swing or gap's middle candle (buffer 0, 0.1, 0.25 ATR); target: 1R, 2R, 3R, next level, last swing...",
+        "Filters: trend agrees, skip choppy days, skip 3 or 5 day run...",
+        "The lab counted 20,265,402,666,000.",
+        "DONE WHEN: The audit, session counts per window, sealed manifest and guard tests all pass..."
       ],
-      "what_it_argues": "Details shared execution dials and filters, showing the theoretical search space spans 20.26 trillion valid versions.",
+      "what_it_argues": "Details shared trade dials, filters, and total combinatorial space count.",
       "confidence": "high"
     },
     {
@@ -1018,54 +927,53 @@
       "axes_or_columns": [],
       "values_readable": [
         "6 / 16",
-        "WHAT THIS BUILDS: Trade engine and behavior tests asking whether price respects levels, flips, breaks, sweeps, gaps, zones more than chance.",
-        "INPUTS: Cleaned 1m bars of NQ and ES in discovery window, derived MTF bars with ATR, roll times, news days, detectors.",
-        "RULES: Master seed, no look-ahead bias (unit test: mock detector run on cut data must equal full run)."
+        "WHAT THIS BUILDS: The trade engine, and the behavior tests...",
+        "RULES: One master seed for every draw... No look-ahead: a trigger bar sees only setup-chart bars that have closed."
       ],
-      "what_it_argues": "Sets requirements for the backtesting engine and anti-lookahead unit tests.",
+      "what_it_argues": "Specifies execution engine rules and verification tests against look-ahead bias.",
       "confidence": "high"
     },
     {
       "ts": "00:16:16",
       "type": "slide",
-      "title": "PROMPT 2 OF 5 · CONTINUED",
+      "title": "PROMPT 2 OF 5 - CONTINUED",
       "axes_or_columns": [],
       "values_readable": [
         "7 / 16",
-        "THE ENGINE: 1 contract per trade (half-size on news, 1 position at a time per strategy). No overnight hold unless flat at 16:00. Every fill/exit checked on 1m bars.",
-        "Costs: $4 commission round trip, 1 tick slippage on market entries, hard stops, close stops, structure exits. No slippage on limits, targets, time exits, roll exits.",
-        "Limit fills only when 1m bar trades 1 tick through. Hard stop exits 1 tick worse than stop or open. Ambiguous candle (stop and target hit in same 1m bar) counts as loss.",
-        "Tick sizes: NQ: $20/point; ES: 0.25 tick, $50/point. Sharpe is mean over standard deviation of daily P&L times sqrt(252)."
+        "THE ENGINE:",
+        "One contract per trade... one position at a time per strategy...",
+        "Costs on every trade: $4 commission per round trip, plus 1 tick of slippage...",
+        "NQ 0.25: point $20, point ES: 0.25 tick, $50 a point.",
+        "Sharpe is the mean over the standard deviation of daily P&L, times the square root of 252."
       ],
-      "what_it_argues": "Defines explicit fill logic, execution constraints, transaction costs, and tick math for realistic backtesting.",
+      "what_it_argues": "Specifies execution pricing, transaction costs, slippage, and Sharpe calculation.",
       "confidence": "high"
     },
     {
       "ts": "00:16:18",
       "type": "slide",
-      "title": "PROMPT 2 OF 5 · CONTINUED",
+      "title": "PROMPT 2 OF 5 - CONTINUED",
       "axes_or_columns": [],
       "values_readable": [
         "8 / 16",
-        "ENGINE CHECKS: Unit tests on made-up price paths; 20,000 market entries at random discovery minutes with 1R ATR stop and 2R target lose -$9.80/trade after costs; intentional look-ahead cheat test makes money.",
-        "BEHAVIOR TESTS: Measure price action after events vs random stand-in on NQ and ES (5m, 15m, 1h, 4h, daily). Swing strength 3, 0.25 ATR tolerance.",
-        "Random lines: move real levels up/down 1 to 3 ATR (>=0.5 ATR from real level); random remedies with 20 random bars."
+        "ENGINE CHECKS: 20,000 market entries at random discovery minutes with a 1R stop and a 2R target: after costs they should lose a little (the lab got -$9.80 a trade).",
+        "BEHAVIOR TESTS: swing strength 3 and 0.25 ATR level tolerance... Random lines: move each real level up or down by 1 to 3 ATR..."
       ],
-      "what_it_argues": "Establishes sanity-check benchmarks and behavior statistical tests against randomized levels.",
+      "what_it_argues": "Specifies empirical benchmark tests for trade engine integrity and level significance.",
       "confidence": "high"
     },
     {
       "ts": "00:16:20",
       "type": "slide",
-      "title": "PROMPT 2 OF 5 · CONTINUED",
+      "title": "PROMPT 2 OF 5 - CONTINUED",
       "axes_or_columns": [],
       "values_readable": [
         "9 / 16",
-        "THE TESTS: real levels against random lines; hold rate by touch count; shrinking bounces; wick vs close through level; flip zones; follow-through at 10, 20, 50 bars; sweeps; trend lines; FVG; supply/demand zones; pullback depth; rejection candles.",
+        "The tests: real levels against random lines; hold rate by touch count...",
         "Intervals: 2,000 bootstrap resamples of whole sessions, 95% intervals.",
-        "Verdict: true when NQ interval excludes zero, ES agrees in sign, and both eras agree; split when partly holds; false otherwise."
+        "Verdict: true when NQ pooled points the claimed way with an interval that excludes zero, ES has the same sign and both eras agree..."
       ],
-      "what_it_argues": "Defines statistical bootstrapping and multi-era criteria to evaluate whether price action concepts have an edge.",
+      "what_it_argues": "Defines bootstrap validation criteria for statistical significance of price patterns.",
       "confidence": "high"
     },
     {
@@ -1075,40 +983,41 @@
       "axes_or_columns": [],
       "values_readable": [
         "10 / 16",
-        "WHAT THIS BUILDS: Funnel filtering hundreds of thousands of strategy versions.",
-        "THE VERSIONS: Random set of 40,000 versions (4,000 per setup), requiring >=40 signals on NQ discovery."
+        "WHAT THIS BUILDS: The funnel that runs tens of thousands of strategy versions...",
+        "THE VERSIONS: A random sample: 40,000 versions, 4,000 per setup... Only keep versions with at least 40 signals on NQ discovery."
       ],
-      "what_it_argues": "Outlines candidate generation across the search space.",
+      "what_it_argues": "Specifies sample sizes and minimum signal constraints for initial testing.",
       "confidence": "high"
     },
     {
       "ts": "00:16:23",
       "type": "slide",
-      "title": "PROMPT 3 OF 5 · CONTINUED",
+      "title": "PROMPT 3 OF 5 - CONTINUED",
       "axes_or_columns": [],
       "values_readable": [
         "11 / 16",
-        "Six named versions: Bare Minimum, Daily Version, Checklist, Sweep System, Trend System, Ultra-Safe.",
-        "Grid of usual settings: 14,016 versions.",
-        "Trader sample: 47,320 versions (40% no filter, 40% 1 filter, 20% 2 filters).",
-        "THE FUNNEL: 1. Trades >= 30; 2. Win rate > 50%; 3. Sharpe >= 0.5."
+        "Six named versions inside it... The lab's grid had 14,016 versions.",
+        "A sample of versions as people trade them... The lab drew 47,329.",
+        "THE FUNNEL:",
+        "1. Enough trades: 38 or more.",
+        "2. Made money: net P&L > $0.",
+        "3. A Sharpe of 0.5 or more."
       ],
-      "what_it_argues": "Defines the test batches and initial filter thresholds.",
+      "what_it_argues": "Outlines exact funnel criteria for passing strategies on discovery data.",
       "confidence": "high"
     },
     {
       "ts": "00:16:25",
       "type": "slide",
-      "title": "PROMPT 3 OF 5 · CONTINUED",
+      "title": "PROMPT 3 OF 5 - CONTINUED",
       "axes_or_columns": [],
       "values_readable": [
         "12 / 16",
-        "4. Beat matched random trades: 10,000 sets of twin random trades; pass when <5% of sets match performance.",
-        "5. Hold on ES: profitable on ES discovery with Sharpe >= 0.3.",
-        "Final-test candidate: passes 1 to 4, profitable in both eras (2022 and 2023-2024), holds on ES.",
-        "JUDGE SETUP: Average daily P&L across all versions with equal weight; profitable per year, Sharpe >= 0.5, profitable in 2022 and 2023-24."
+        "4. Beat matched random trades... 10,000 sets of twins; version passes when fewer than 5% of sets make as much as it did.",
+        "5. Held on ES: Sharpe of 0.3 or more.",
+        "JUDGE EACH SETUP AS A WHOLE: average daily P&L of all its versions... Sharpe of 0.5 or more..."
       ],
-      "what_it_argues": "Defines advanced filter steps (Monte Carlo twin test and cross-asset validation on ES) to eliminate curve-fitting.",
+      "what_it_argues": "Defines twin random trade matching and cross-market verification thresholds.",
       "confidence": "high"
     },
     {
@@ -1118,340 +1027,253 @@
       "axes_or_columns": [],
       "values_readable": [
         "13 / 16",
-        "WHAT THIS BUILDS: Final test on sealed data (NQ and ES 1m bars from 2024-08-01).",
-        "RULES: No dial or threshold changes. Check sha256 hashes. Rehearse on shifted last month of discovery. Single logged unlock."
+        "WHAT THIS BUILDS: The final test on data no rule has seen.",
+        "INPUTS: sealed final window (2024-08-01 to 2024-10-16)...",
+        "RULES: Nothing chosen in discovery changes now... Run once."
       ],
-      "what_it_argues": "Specifies strict out-of-sample testing protocols preventing data snooping.",
+      "what_it_argues": "Outlines out-of-sample final test protocol on untouched sealed data.",
       "confidence": "high"
     },
     {
       "ts": "00:16:27",
       "type": "slide",
-      "title": "PROMPT 4 OF 5 · CONTINUED",
+      "title": "PROMPT 4 OF 5 - CONTINUED",
       "axes_or_columns": [],
       "values_readable": [
         "14 / 16",
-        "THE RUN: Warm up detectors from 2024-05-01. Score on NQ and ES over final window with identical costs and fill logic.",
-        "WHAT HELD UP: Version held up if profitable after costs with Sharpe >= 0.5. Setup held up if equal-weight average made money per year with Sharpe >= 0.5."
+        "THE RUN: Join discovery bars from 2024-05-01 to warm up detectors...",
+        "WHAT HELD UP: Sharpe of 0.5 or more on that market's final window... equal-weight average Sharpe of 0.5 or more."
       ],
-      "what_it_argues": "Specifies execution and success criteria on the held-out final test period.",
+      "what_it_argues": "Defines success criteria for out-of-sample validation on sealed data.",
       "confidence": "high"
     },
     {
-      "ts": "00:16:29",
+      "ts": "00:16:28",
       "type": "slide",
       "title": "PROMPT 5 OF 5 / The dashboard",
       "axes_or_columns": [],
       "values_readable": [
         "15 / 16",
-        "WHAT THIS BUILDS: Presentation dashboard with full provenance tracking.",
-        "RULES: Every number on screen must trace to a saved file. Provenance file records source file, row, column, format, and displayed text. Double read verification. Facecam cutout 520x368 px.",
-        "PAGE: Offline static HTML, 1920x1080 stage, navy background (#0b0f1a), cyan and amber accents."
+        "WHAT THIS BUILDS: The complete presenter dashboard... every number traced to a saved file.",
+        "A single HTML file that works offline... 1920x1080 stage... navy background (#080f1a), cyan and amber accents"
       ],
-      "what_it_argues": "Details UI dashboard generation and data integrity verification for results presentation.",
+      "what_it_argues": "Specifies design and data provenance architecture of the reporting dashboard.",
       "confidence": "high"
     },
     {
-      "ts": "00:16:31",
+      "ts": "00:16:30",
       "type": "slide",
-      "title": "PROMPT 5 OF 5 · CONTINUED",
+      "title": "PROMPT 5 OF 5 - CONTINUED",
       "axes_or_columns": [],
       "values_readable": [
         "16 / 16",
-        "Each finding gets a page: eyebrow section, title, one-line subtitle, 1 chart, max 2 big stats, conclusion badge ('survived, split or didn't survive').",
-        "Checks in headless Chrome at 1920x1080 and 1280x720. Provenance check must pass on every number."
+        "CHECKS: A layout check in headless Chrome at 1920x1080 and 1280x720...",
+        "Confirm the provenance of every page... DONE WHEN: The provenance check passes on every number..."
       ],
-      "what_it_argues": "Specifies automated QA testing for visual presentation slides.",
+      "what_it_argues": "Establishes validation checks for dashboard layout and data accuracy.",
       "confidence": "high"
     }
   ],
   "formulas": [
     {
       "ts": "00:16:16",
-      "expression": "Sharpe = (mean(daily P&L) / std(daily P&L)) * sqrt(252)",
+      "expression": "Sharpe = (mean(daily_pnl) / std(daily_pnl)) * sqrt(252)",
       "variables": [
         {
-          "symbol": "mean(daily P&L)",
-          "meaning": "Mean of daily strategy profit and loss across trading sessions"
+          "symbol": "mean(daily_pnl)",
+          "meaning": "Mean of daily profit and loss"
         },
         {
-          "symbol": "std(daily P&L)",
-          "meaning": "Standard deviation of daily strategy profit and loss"
+          "symbol": "std(daily_pnl)",
+          "meaning": "Standard deviation of daily profit and loss"
         },
         {
           "symbol": "sqrt(252)",
-          "meaning": "Annualization factor corresponding to the square root of 252 trading days per year"
+          "meaning": "Square root of 252 trading days for annualization"
         }
       ]
     }
   ],
   "strategies": [
     {
-      "name": "Change of Character (CHoCH)",
-      "ts": "00:01:53",
-      "logic": "Identifies the first structural break against an established trend (e.g. price closing below the prior higher low in an uptrend) to enter in the direction of the trend reversal.",
+      "name": "Quantitative Price Action Framework",
+      "ts": "00:01:05",
+      "logic": "Systematizes 10 visual price action setups by standardizing support/resistance levels, trend swings, change of character reversals, and breakout/pullbacks using objective ATR thresholds and candle confirmation rules.",
       "entry_rules": [
-        "In an uptrend, wait for price to close below the most recent higher low swing level.",
-        "Enter on candle confirmation closing past the level."
+        "Level detected when 2 or more price swing points occur within 0.25 ATR.",
+        "Touch registered when price enters within 0.25 ATR of the level.",
+        "Confirmation entry requires a candle close back across the designated level rather than entering on a limit touch."
       ],
       "exit_rules": [
-        "Hard stop-loss placed beyond the swing high."
+        "Hard stop loss placed past the level or previous swing point (hard stop beat close-based stop in backtesting).",
+        "Target placed based on fixed R-multiples (1R, 1.5R, 2R, 3R, 4R, 5R) or structural swing points."
+      ],
+      "parameters": [
+        {
+          "name": "level_tolerance",
+          "value": "0.25 ATR"
+        },
+        {
+          "name": "touch_tolerance",
+          "value": "0.25 ATR"
+        },
+        {
+          "name": "tested_timeframes",
+          "value": "1m, 5m, 15m, 1h, 4h, daily"
+        }
+      ],
+      "markets_assets": [
+        "NQ (Nasdaq 100 futures)",
+        "ES (E-mini S&P 500 futures)"
+      ],
+      "stated_performance": "Out of 101,345 tested configurations, 24,879 were profitable after transaction costs, and 8,310 achieved a Sharpe ratio of 0.5 or greater on NQ discovery data.",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "Included real exchange fees and commissions on every trade, slippage modeled on every stop loss, and intra-bar ambiguous target/stop hits treated as full losses."
+    },
+    {
+      "name": "4h Change of Character (CHoCH) Strategy",
+      "ts": "00:11:49",
+      "logic": "Enters on a trend reversal signaled by a 4-hour change of character candle close without requiring a prior liquidity sweep.",
+      "entry_rules": [
+        "Identify trend reversal (CHoCH) on the 4-hour chart",
+        "Enter at the candle close of the CHoCH candle (confirmation candle)",
+        "Do not require a prior liquidity sweep before the change",
+        "Trade only during the New York session (8:00 AM to 4:00 PM ET)",
+        "Skip trades entered directly into an opposing 3+ day run"
+      ],
+      "exit_rules": [
+        "Hard stop placed past the last swing high/low",
+        "Target set at 1R (equal in size to the risk taken)"
       ],
       "parameters": [
         {
           "name": "Timeframe",
-          "value": "4h (noted as best setup timeframe)"
-        }
-      ],
-      "markets_assets": [
-        "NQ",
-        "ES"
-      ],
-      "stated_performance": "Identified as holding up the best out of all price action findings.",
-      "costs_slippage_mentioned": true,
-      "costs_slippage_detail": "Backtested with real costs on every trade and slippage on every stop."
-    },
-    {
-      "name": "Algorithmic Level Support/Resistance Bounce",
-      "ts": "00:04:12",
-      "logic": "Identifies horizontal support/resistance levels mathematically using ATR cluster rules and trades the bounce upon confirmation.",
-      "entry_rules": [
-        "Identify level where 2 or more swings occur within 0.25 ATR of each other.",
-        "Price touches within 0.25 ATR of the level.",
-        "Confirmation candle closes back across the level."
-      ],
-      "exit_rules": [
-        "Hard stop-loss beat close-based stop; profit targets showed no edge."
-      ],
-      "parameters": [
-        {
-          "name": "Swing proximity threshold",
-          "value": "0.25 ATR"
+          "value": "4-hour"
         },
         {
-          "name": "Touch proximity threshold",
-          "value": "0.25 ATR"
-        }
-      ],
-      "markets_assets": [
-        "NQ",
-        "ES"
-      ],
-      "stated_performance": "Beat random lines from 5m to daily timeframes; confirmation entry beat limit orders on NQ.",
-      "costs_slippage_mentioned": true,
-      "costs_slippage_detail": "Tested against gauntlet with real costs, slippage on every stop, and ambiguous candles counted as losses."
-    },
-    {
-      "name": "Price Action Support/Resistance & Flip Zones",
-      "ts": "00:05:00",
-      "logic": "Trading bounces or breakouts from identified horizontal support/resistance levels and flip zones (broken resistance becoming support or vice versa).",
-      "entry_rules": [
-        "Price touches a defined support/resistance level or flip zone.",
-        "Optional confirmation candle or filter as parameterized."
-      ],
-      "exit_rules": [
-        "Stop-loss placed past the level or last swing.",
-        "Target exit based on fixed R-multiple (e.g. 1R, 1.5R, 2R, 3R, 4R, 5R) or next structure level."
-      ],
-      "parameters": [
-        {
-          "name": "Touches",
-          "value": "1 to 4+ touches"
+          "name": "Session window",
+          "value": "8:00 AM to 4:00 PM ET"
         },
         {
-          "name": "Level representation",
-          "value": "Line or Zone (box)"
+          "name": "Risk to reward ratio",
+          "value": "1:1 (1R)"
         },
         {
-          "name": "Chart timeframes",
-          "value": "1m, 5m, 15m, 1h, 4h, Daily"
-        },
-        {
-          "name": "Profit Target",
-          "value": "1R to 5R or Next structure level"
+          "name": "Stop mechanism",
+          "value": "Hard stop"
         }
       ],
       "markets_assets": [
         "NQ (Nasdaq futures)",
-        "ES (S&P 500 futures)"
+        "ES (E-mini S&P 500 futures)"
       ],
-      "stated_performance": "24,879 of 101,345 versions were profitable after costs; flip zones hold +11.5 pts over random on NQ and +10.9 pts on ES.",
+      "stated_performance": "+$62,179 on NQ (61 trades, 54% win rate) and +$39,284 on ES across 2 locked out-of-sample years; average NY session version made +$17,041 on NQ.",
       "costs_slippage_mentioned": true,
-      "costs_slippage_detail": "Full trading commissions deducted on every trade, slippage applied on every execution step, ambiguous intraday bars counted as full losses."
+      "costs_slippage_detail": "Trading costs and commissions modeled per contract; 4h timeframe incurs ~6% costs relative to gross profit."
     },
     {
-      "name": "4-Hour Change of Character Reversal (Best Version)",
-      "ts": "00:12:31",
-      "logic": "Enter a mean reversion/reversal trade following a Change of Character (CHoCH) on a 4-hour chart without requiring a preceding liquidity sweep.",
-      "entry_rules": [
-        "Identify an established trend on the 4-hour chart.",
-        "Wait for a Change of Character (first candle close in the opposite direction breaking market structure).",
-        "No prior liquidity sweep required.",
-        "Enter at the close of the confirming 4-hour candle (optionally restricted to New York session: 8:00 AM - 4:00 PM ET; avoid trading in the direction of an extended 3+ day run)."
-      ],
-      "exit_rules": [
-        "Place a hard stop immediately beyond the last swing extreme (e.g., swing high for a short setup). Do not use a close-based stop.",
-        "Set profit target at 1:1 risk-to-reward (target size equals risk size)."
-      ],
-      "parameters": [
-        {
-          "name": "Timeframe",
-          "value": "4h"
-        },
-        {
-          "name": "Risk-to-Reward Ratio",
-          "value": "1:1"
-        },
-        {
-          "name": "Session Filter",
-          "value": "New York session only (8:00 AM to 4:00 PM ET)"
-        },
-        {
-          "name": "Trend Run Filter",
-          "value": "Skip trades into a 3+ day run"
-        }
-      ],
-      "markets_assets": [
-        "NQ (Nasdaq 100 E-mini futures)",
-        "ES (S&P 500 E-mini futures)"
-      ],
-      "stated_performance": "+$62,179 on NQ (61 trades, 54% win rate) and +$39,284 on ES over 2 locked years per contract.",
-      "costs_slippage_mentioned": false,
-      "costs_slippage_detail": ""
-    },
-    {
-      "name": "4h Change of Character Reversal (Mean Reversion)",
+      "name": "Price Action Mean Reversion / Reversal (4h Change of Character / Sweep & Reclaim)",
       "ts": "00:15:00",
-      "logic": "Reversal mean-reversion setup where price stretches excessively on the 4-hour chart and triggers an entry upon a change of character (first close past the last swing high/low).",
+      "logic": "Enters a trade when price is overstretched beyond swing levels, key zones, or swept liquidity, anticipating reversion to the mean.",
       "entry_rules": [
-        "Price stretches too high or too low.",
-        "Change of character confirmed by the first close past the last swing on the 4-hour chart (or lower trigger chart)."
+        "Identified change of character or sweep on 4h/trigger chart.",
+        "Enter at close of trigger candle, limit at level, or stop beyond level upon confirmation (close back, rejection wick, or engulfing)."
       ],
       "exit_rules": [
-        "Take profit targets set at 1R, 1.5R, 2R, 3R, 5R, 10R or next swing.",
-        "Stop loss set beyond the level or swing point with 0 to 0.25 ATR buffer.",
-        "Time exit at 16:00, 16:40, or after 24/96 bars."
+        "Stop loss: touch wick, last swing, or gap middle candle with 0, 0.1, or 0.25 ATR buffer.",
+        "Target: 1R, 2R, 3R, next level, or last swing.",
+        "Exit on opposite change of character or time exit at 16:00."
       ],
       "parameters": [
         {
-          "name": "chart_timeframe",
-          "value": "4h"
+          "name": "ATR Length",
+          "value": "14"
         },
         {
-          "name": "swing_strength",
-          "value": "3"
+          "name": "Swing Peak/Valley Strength",
+          "value": "2, 3, 5, or 8"
         },
         {
-          "name": "atr_level_tolerance",
-          "value": "0.25 ATR"
+          "name": "Level Tolerance",
+          "value": "0.1, 0.25, or 0.5 ATR"
         }
       ],
       "markets_assets": [
         "NQ futures",
         "ES futures"
       ],
-      "stated_performance": "Serves as an average baseline ('floor') that held up across thousands of tested iterations.",
+      "stated_performance": "Described as the only core strategy type that consistently held up across thousands of variations and survived discovery and sealed testing with Sharpe >= 0.5.",
       "costs_slippage_mentioned": true,
-      "costs_slippage_detail": "$4 commission per round trip, 1 tick slippage on market entries and stop exits."
+      "costs_slippage_detail": "$4 commission per round trip; 1 tick slippage on market entries, hard stops, close-based stops, and structure exits."
     }
   ],
   "tools_and_data": [
     {
       "name": "Claude",
-      "type": "other",
-      "how_used": "Used to generate and build out the code and backtesting engine infrastructure to systematically test 101,345 price action parameter configurations.; Used as the LLM coding agent to build the multi-layer backtesting engine and process large-scale trading simulations."
+      "type": "platform",
+      "how_used": "Used to generate the quantitative backtesting architecture, translate visual discretionary price action rules into parameterized programmatic code, and orchestrate the testing runs across millions of bars."
     },
     {
-      "name": "CME E-mini S&P 500 (ES) & E-mini Nasdaq-100 (NQ) 1-Minute Historical Data",
+      "name": "NQ and ES 1-minute historical futures data",
       "type": "dataset",
-      "how_used": "5 years of historical 1-minute bar data (3.6 million bars) used to simulate 327 million trades across backtest iterations, including a 2-year locked out-of-sample period."
+      "how_used": "5 years of historical 1-minute OHLCV data comprising 3.6 million bars on NQ and ES futures used for backtesting 101,345 strategy versions, including a 2-year out-of-sample holdout on ES."
     },
     {
       "name": "Skool",
       "type": "platform",
-      "how_used": "Community platform hosting the presenter's AI trading community covering stocks, options, crypto, and futures."
+      "how_used": "Host platform for the creator's trading community focusing on AI-assisted algorithmic trading systems."
     },
     {
-      "name": "NQ 1-minute historical data",
+      "name": "NQ (E-mini / Micro Nasdaq 100 Futures)",
       "type": "dataset",
-      "how_used": "5 years of historical 1-minute futures bars (approx. 3.6 million bars) used as the discovery dataset for testing strategy variations."
+      "how_used": "Primary discovery and out-of-sample locked backtesting dataset."
     },
     {
-      "name": "ES 1-minute historical data",
+      "name": "ES (E-mini S&P 500 Futures)",
       "type": "dataset",
-      "how_used": "Used for out-of-sample validation and testing, including a 2-year locked-away out-of-sample partition."
+      "how_used": "Secondary out-of-sample testing market for cross-market validation."
     },
     {
-      "name": "E-mini Nasdaq-100 Futures (NQ)",
-      "type": "dataset",
-      "how_used": "Used for backtesting and out-of-sample forward evaluation of price action rules and setups."
-    },
-    {
-      "name": "E-mini S&P 500 Futures (ES)",
-      "type": "dataset",
-      "how_used": "Used for cross-market validation of price action setups across discovery and locked-out years."
-    },
-    {
-      "name": "Claude Code",
+      "name": "Python",
       "type": "platform",
-      "how_used": "CLI tool/LLM interface into which the five prompts are pasted sequentially to generate the backtesting codebase."
+      "how_used": "Scripting language and virtual environment used to build the data pipeline, backtest engine, and tests."
     },
     {
       "name": "ChatGPT / Claude",
       "type": "platform",
-      "how_used": "Alternative LLM platforms mentioned for running the prompt sequence."
+      "how_used": "LLMs used to ingest sequential prompts and generate the Python research lab code."
     },
     {
-      "name": "NQ & ES continuous front-month 1-minute futures data",
+      "name": "NQ & ES Continuous Futures",
       "type": "dataset",
-      "how_used": "Raw 1-minute parquet/csv price series used for backtesting, bar aggregation, and out-of-sample validation."
-    },
-    {
-      "name": "Python virtual environment (venv)",
-      "type": "other",
-      "how_used": "Project workspace isolation to run backtesting scripts, logging, and data audits."
+      "how_used": "1-minute continuous front-month futures bars from 2021-10-01 to 2024-10-16 for warm-up, discovery, and sealed evaluation."
     },
     {
       "name": "Headless Chrome",
       "type": "other",
-      "how_used": "Automated visual check of the dashboard at 1920x1080 and 1280x720 resolutions."
+      "how_used": "Used for automated layout checks of the HTML dashboard at 1920x1080 and 1280x720 resolutions."
     }
   ],
   "open_questions": [
     {
-      "ts": "00:00:29",
-      "assertion": "Trend continuation (break of structure) shows no follow-through on any chart.",
-      "missing_support": "The specific metric used to measure 'follow-through' (e.g., MFE/MAE ratio, fixed R-multiple, or forward bar return) is not detailed."
+      "ts": "00:06:20",
+      "assertion": "Over 327 million simulated trades were run across 3.6M 1-minute bars with realistic slippage and execution costs in a few sessions.",
+      "missing_support": "The exact computational execution stack, programming language/backtester code, and specific dollar amounts assumed for commissions and slippage ticks are not detailed."
     },
     {
-      "ts": "00:02:06",
-      "assertion": "Change of character (CHoCH) performed the best out of all setups, specifically on the 4-hour timeframe.",
-      "missing_support": "No exact numerical win rate, profit factor, Sharpe ratio, or drawdown metrics are provided in this clip."
-    },
-    {
-      "ts": "00:02:28",
-      "assertion": "Sweeps reverse only about half the time (~50%).",
-      "missing_support": "The exact definition of a reversal (in terms of tick distance, ATR multiple, or timeframe) is not specified."
-    },
-    {
-      "ts": "00:05:46",
-      "assertion": "Specific parameter definitions for 'checklist', 'entry model', 'zone system', and 'sweep system' named versions.",
-      "missing_support": "Exact quantitative threshold definitions for the named versions shown on the slide are not detailed in this clip."
+      "ts": "00:07:10",
+      "assertion": "8,310 versions achieved a Sharpe ratio of 0.5+.",
+      "missing_support": "The clip does not yet report whether these 8,310 profitable versions retained profitability and Sharpe performance when evaluated on the out-of-sample 2-year ES holdout data."
     },
     {
       "ts": "00:08:34",
-      "assertion": "How random lines were generated and calibrated relative to volatility and price range.",
-      "missing_support": "The specific algorithmic distribution used to draw and score the random comparison lines is not fully specified."
+      "assertion": "Random lines were drawn and scored the exact same way as real support/resistance levels.",
+      "missing_support": "The precise mathematical algorithm used to generate the random lines and determine touches is not detailed in the clip."
     },
     {
-      "ts": "00:12:31",
-      "assertion": "The 4h CHoCH setup produced +$62,179 on NQ and +$39,284 on ES over two locked years.",
-      "missing_support": "Transaction costs, exchange fees, and execution slippage are not explicitly stated or factored into the dollar results shown."
-    },
-    {
-      "ts": "00:13:06",
-      "assertion": "In the original 40,000 variations, most of the gain came from a few big days.",
-      "missing_support": "No detailed distribution or kurtosis metrics of returns are provided to evaluate the dependency on outlier events."
+      "ts": "00:10:41",
+      "assertion": "Waiting for a confirmation candle provided a +$719 edge per year on NQ.",
+      "missing_support": "The specific definition of what constitutes a valid 'confirmation candle' is not formally specified."
     }
   ],
   "schema_version": "1.0",
@@ -1465,20 +1287,17 @@
   "run": {
     "model": "gemini-3.8-flash",
     "model_version": "gemini-3.8-flash",
-    "analyzed_at": "2026-10-29T11:15:43Z",
+    "analyzed_at": "2026-10-29T13:24:18Z",
     "low_res": false,
+    "engine": "static",
     "chunked": true,
     "windows": [
       {
         "start_s": 0,
-        "end_s": 300
+        "end_s": 450
       },
       {
-        "start_s": 300,
-        "end_s": 600
-      },
-      {
-        "start_s": 600,
+        "start_s": 450,
         "end_s": 900
       },
       {
@@ -1488,10 +1307,10 @@
     ],
     "calls": 4,
     "usage": {
-      "prompt_tokens": 96461,
-      "output_tokens": 21218,
-      "thinking_tokens": 11921,
-      "total_tokens": 129600
+      "prompt_tokens": 95800,
+      "output_tokens": 18277,
+      "thinking_tokens": 8036,
+      "total_tokens": 122113
     },
     "tool_version": "0.1.0"
   }
