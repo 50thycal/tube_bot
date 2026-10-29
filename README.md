@@ -19,7 +19,7 @@ pytest
 |---|---|---|
 | `GEMINI_API_KEY` | required | Gemini API key (`.env` locally, repo secret in Actions) |
 | `YTA_MODEL` | `gemini-3.8-flash` | Gemini model id. The default is the current Flash model in Google's video-understanding docs and cookbook. |
-| `YTA_ENGINE` | `static` | `static` (generate_content windows) or `agentic` (experimental: Interactions API, one call, falls back to static) |
+| `YTA_ENGINE` | `interactions` | `interactions` (one background Interactions job, falls back to static), `static` (generate_content windows) or `agentic` (experimental) |
 | `YTA_THINKING_LEVEL` | model default | `minimal`/`low`/`medium`/`high` (both engines) |
 | `YTA_STREAM_THOUGHTS` | `1` | static engine: stream thought summaries so bytes flow before the JSON starts (`0` to disable) |
 | `YTA_AGENTIC_TIMEOUT_S` | `1800` | give up (and cancel) a background interaction after this long |
@@ -32,7 +32,7 @@ pytest
 ## CLI
 
 ```bash
-yta analyze <url> [--force] [--model X] [--engine agentic|static] [--low-res] [--root DIR]
+yta analyze <url> [--force] [--model X] [--engine interactions|static|agentic] [--low-res] [--root DIR]
 yta render videos/<dir>/raw.json      # re-render digest.md, no API call
 ```
 
@@ -69,7 +69,9 @@ Timestamps are absolute `HH:MM:SS`. Values on visuals are transcribed exactly as
 
 ## Engines
 
-**`static` (default).** `generate_content` with the URL as a `file_data` part, clipped into windows with `video_metadata` offsets. Synchronous requests on YouTube URLs are dropped once they have been processing for roughly 255–270 s. Window length is set from live success rates:
+**`interactions` (default).** One Interactions API job over the whole URL with `processing: "static"`, run with `background=True` and polled. It uses the same JSON schema and prompt as the other engines, falls back to `static`, and honours `--low-res`. Why it exists: with `generate_content`, the first byte of a response arrives only after Gemini has ingested the YouTube video. A 3.5-minute clip's first chunk took 285 s. The server drops requests that stay silent for about 255–320 s, so synchronous calls fail at random regardless of clip length. A background job holds no connection open. Live result: the 17-minute test video took one call, about 1.5 minutes wall clock and about 108k tokens on gemini-3.6-flash, with no drops and no cross-window duplicates.
+
+**`static` (fallback).** `generate_content` with the URL as a `file_data` part, clipped into windows with `video_metadata` offsets. Synchronous requests on YouTube URLs are dropped once they have been processing for roughly 255–270 s. Window length is set from live success rates:
 
 | Window | Succeeded | Notes |
 |---|---|---|
@@ -80,8 +82,6 @@ Timestamps are absolute `HH:MM:SS`. Values on visuals are transcribed exactly as
 | whole video | 0/3 | including a low-res duration probe |
 
 Re-sending a dropped window at the same size succeeded 0 of 3 times, so a drop splits the window immediately.
-
-**`interactions` (`--engine interactions`).** One Interactions API job over the whole URL with `processing: "static"`, run with `background=True` and polled. It uses the same JSON schema and prompt as the other engines, falls back to `static`, and honours `--low-res`. Why it exists: with `generate_content`, the first byte of a response arrives only after Gemini has ingested the YouTube video. A 3.5-minute clip's first chunk took 285 s. The server drops requests that stay silent for about 255–320 s, so synchronous calls fail at random regardless of clip length. A background job holds no connection open.
 
 **`agentic` (experimental, `--engine agentic`).** One [Interactions API](https://ai.google.dev/gemini-api/docs/video-understanding) call with the YouTube URL and `processing: "agentic"`. The model navigates the timeline itself, loading the transcript and frames on demand, instead of decoding every frame up front. One call covers the whole video, so there are no windows to merge and no cross-window duplicates. The call runs with `background=True` and is polled, so no HTTP request is held open while the server works. Output is constrained by the same JSON schema (`response_format`). If the interaction fails, it is retried once with the schema in the prompt instead of `response_format`, and then the run falls back to `static`. A private or unavailable video fails immediately. **Status:** on the first test video it failed 3 out of 3 times. Each attempt ran a `processing_call`/`processing_result` step, then ended "There was a problem processing your request" with 0 tokens, both with and without `response_format`. The cause, whether the free tier, the prompt, or this video, is not yet known, so it is opt-in.
 

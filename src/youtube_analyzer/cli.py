@@ -31,10 +31,10 @@ def _build_parser() -> argparse.ArgumentParser:
     a.add_argument(
         "--engine",
         choices=["static", "interactions", "agentic"],
-        help="static: generate_content over clipped windows (default); "
-        "interactions: one background Interactions API job over the whole video, polled (falls back to static); "
+        help="interactions (default): one background Interactions API job over the whole video, polled, "
+        "falls back to static; static: generate_content over clipped windows; "
         "agentic: like interactions but the model navigates the video (experimental) "
-        "(default: $YTA_ENGINE or static)",
+        "(default: $YTA_ENGINE or interactions)",
     )
     a.add_argument("--root", default=".", help="output root containing videos/ and index.jsonl (default: .)")
 

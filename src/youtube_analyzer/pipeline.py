@@ -81,9 +81,10 @@ def analyze(
     meta = metadata_fetcher(canon)
     model = resolve_model(model)
     run = _Run()
-    # Agentic is opt-in: on the first live video it failed 3/3 ("There was a problem
-    # processing your request", 0 tokens) with and without response_format.
-    engine = engine or os.environ.get("YTA_ENGINE") or "static"
+    # Default: one background Interactions job (live: 17-min video in one call,
+    # ~1.5 min wall clock, no drops). Agentic is opt-in: it failed 3/3 on the
+    # first live video ("There was a problem processing your request", 0 tokens).
+    engine = engine or os.environ.get("YTA_ENGINE") or "interactions"
     if engine not in ENGINES:
         raise ValueError(f"unknown engine {engine!r} ({'|'.join(ENGINES)})")
     duration = meta.duration_s

@@ -270,7 +270,13 @@ def test_pipeline_unknown_engine(tmp_path):
         analyze(URL, tmp_path, engine="bogus", metadata_fetcher=_meta)
 
 
-def test_default_engine_is_static(tmp_path, sample):
+def test_default_engine_is_interactions(tmp_path, sample):
+    r = analyze(URL, tmp_path, agentic_extractor=FakeAgentic(sample), extractor=FailStatic(), metadata_fetcher=_meta)
+    assert r.analysis.run.engine == "interactions"
+
+
+def test_engine_env_static_skips_interactions(tmp_path, sample, monkeypatch):
+    monkeypatch.setenv("YTA_ENGINE", "static")
     ag = FakeAgentic(sample)
     with pytest.raises(AssertionError, match="static path"):
         analyze(URL, tmp_path, agentic_extractor=ag, extractor=FailStatic(), metadata_fetcher=_meta)
