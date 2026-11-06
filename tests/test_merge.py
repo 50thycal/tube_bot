@@ -66,3 +66,27 @@ def test_merge_windows(sample):
     assert st.costs_slippage_mentioned and st.costs_slippage_detail == "$0.005/share"
     assert len(m.tools_and_data) == 1 and m.tools_and_data[0].how_used == "charting; alerts"
     assert len(m.open_questions) == 1  # same assertion de-duplicated
+
+
+def test_repair_segments_written_as_mmss(sample):
+    from youtube_analyzer.merge import repair_ts_scale
+
+    # Live case: segments as MM:SS:00 while visuals/claims are proper HH:MM:SS.
+    sample["segments"] = [
+        {"start_ts": "00:00:00", "end_ts": "01:04:00", "topic": "a", "key_points": []},
+        {"start_ts": "01:04:01", "end_ts": "23:11:00", "topic": "b", "key_points": []},
+    ]
+    sample["visuals"][0]["ts"] = "00:22:30"
+    sample["claims"][0]["ts"] = "00:17:35"
+    c = normalize_window(ContentExtraction.model_validate(sample), None)
+    assert [(s.start_ts, s.end_ts) for s in c.segments] == [("00:00:00", "00:01:04"), ("00:01:04", "00:23:11")]
+    assert c.visuals[0].ts == "00:22:30" and c.claims[0].ts == "00:17:35"
+    # already-consistent content is untouched
+    assert repair_ts_scale(c) is c
+
+
+def test_repair_leaves_long_consistent_video_alone(sample):
+    sample["segments"] = [{"start_ts": "00:00:00", "end_ts": "02:10:00", "topic": "a", "key_points": []}]
+    sample["visuals"][0]["ts"] = "02:05:00"
+    c = normalize_window(ContentExtraction.model_validate(sample), None)
+    assert c.segments[0].end_ts == "02:10:00"

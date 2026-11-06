@@ -81,6 +81,7 @@ class AgenticExtractor:
         self.model = model
         self.processing = processing
         self.low_res = low_res
+        self.overload_retries = int(os.environ.get("YTA_OVERLOAD_RETRIES", 2))
         self._client = client
         self.poll_s = poll_s
         self.timeout_s = timeout_s or float(os.environ.get("YTA_AGENTIC_TIMEOUT_S", 1800))
@@ -110,18 +111,26 @@ class AgenticExtractor:
         spent = Usage()
         last: ExtractionFailed | None = None
         for variant in ("response_format", "prompt_json"):
-            try:
-                res = self._run_once(url, structured=(variant == "response_format"))
-            except ExtractionFailed as e:
-                spent = spent.add(getattr(e, "usage", None) or Usage())
-                if getattr(e, "timed_out", False):
-                    raise
-                log.warning("agentic (%s) failed: %s", variant, e)
-                last = e
-                continue
-            res.usage = res.usage.add(spent)
-            res.variant = variant
-            return res
+            for attempt in range(self.overload_retries + 1):
+                try:
+                    res = self._run_once(url, structured=(variant == "response_format"))
+                except ExtractionFailed as e:
+                    spent = spent.add(getattr(e, "usage", None) or Usage())
+                    if getattr(e, "timed_out", False):
+                        raise
+                    last = e
+                    # A job that fails within seconds, before the model produced anything,
+                    # was seen during Gemini "high demand" spikes: wait and resubmit.
+                    if getattr(e, "fast_fail", False) and attempt < self.overload_retries:
+                        delay = 30.0 * 2**attempt
+                        log.warning("%s (%s) failed fast (likely overload); retrying in %.0fs", self.processing, variant, delay)
+                        self._sleep(delay)
+                        continue
+                    log.warning("%s (%s) failed: %s", self.processing, variant, e)
+                    break
+                res.usage = res.usage.add(spent)
+                res.variant = variant
+                return res
         last.usage = spent
         raise last
 
@@ -171,6 +180,7 @@ class AgenticExtractor:
             errs = "; ".join(str(getattr(e, "message", e)) for e in (interaction.errors or []))
             err = ExtractionFailed(f"agentic interaction {iid} ended {interaction.status}: {errs or 'no error detail'}")
             err.usage = usage
+            err.fast_fail = elapsed < 60 and "model_output" not in steps and not usage.total_tokens
             raise err
         out = interaction.output_text or ""
         if not out.strip():

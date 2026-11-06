@@ -104,6 +104,18 @@ def test_agentic_falls_back_to_schema_in_prompt(sample):
     assert res.usage.total_tokens == 82000  # failed attempt's usage is kept
 
 
+def test_fast_failure_is_retried_after_a_wait(sample, monkeypatch):
+    # Seen during Gemini "high demand": the job fails within seconds with nothing produced.
+    no_usage = NS(total_input_tokens=0, total_output_tokens=0, total_thought_tokens=0, total_tokens=0)
+    overloaded = NS(id="int_1", status="failed", output_text=None, usage=no_usage, model="m", steps=[], errors=[NS(message="problem")])
+    sleeps = []
+    client = NS(interactions=FakeInteractions([overloaded, _interaction("completed", json.dumps(sample))]))
+    ex = AgenticExtractor(model="m", client=client, poll_s=0, sleep=sleeps.append, processing="static")
+    res = ex.extract(URL)
+    assert res.variant == "response_format" and len(client.interactions.created) == 2
+    assert 30.0 in sleeps
+
+
 def test_agentic_invalid_output():
     ex, _ = _ex([_interaction("completed", '{"summary": "x"}')] * 2)
     with pytest.raises(ExtractionFailed, match="schema validation"):

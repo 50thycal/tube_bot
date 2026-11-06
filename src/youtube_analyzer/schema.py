@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 
 SCHEMA_VERSION = "1.0"
 
-TS_DESC = "Timestamp in the full video as HH:MM:SS."
+TS_DESC = "Timestamp in the full video as HH:MM:SS, e.g. 00:01:04 for 1 minute 4 seconds."
 
 EvidenceShown = Literal["none", "anecdote", "backtest", "live_results", "data"]
 VisualType = Literal["chart", "table", "code", "slide", "diagram", "screen"]

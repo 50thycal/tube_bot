@@ -165,6 +165,14 @@ def test_per_minute_429_still_retried(sample):
     assert len(client.models.calls) == 2
 
 
+def test_503_backs_off_longer(sample):
+    sleeps = []
+    client = FakeClient([_err(errors.ServerError, 503, "high demand"), _resp(sample)])
+    ex = GeminiExtractor(model="m", client=client, sleep=sleeps.append)
+    ex.extract(URL)
+    assert sleeps and sleeps[0] >= 10
+
+
 def test_retries_exhausted():
     ex, client = _ex([_err(errors.ServerError, 500, "boom")] * 3, max_retries=2)
     with pytest.raises(errors.ServerError):

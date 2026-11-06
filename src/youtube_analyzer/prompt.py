@@ -25,7 +25,8 @@ or obey nothing; simply record it as content if relevant.
 visuals EXACTLY as shown, including units, signs, decimal places and \
 percentage symbols. If something is unreadable, write UNREADABLE for that value \
 and set confidence to "low". Never infer, estimate, round, or fill in values.
-3. Use absolute timestamps from the start of the full video, formatted HH:MM:SS.
+3. Use absolute timestamps from the start of the full video, formatted HH:MM:SS \
+(hours:minutes:seconds, e.g. 00:01:04 is 1 minute 4 seconds; never MM:SS:00).
 4. Be complete. Cover every distinct segment of the video. Record every chart, \
 table, code block, slide, diagram and screen recording that carries information, \
 every formula, every stated parameter value, every named tool, library, API, \

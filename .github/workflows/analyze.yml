@@ -125,8 +125,16 @@ jobs:
                 *) echo "::warning::ignoring unknown flag '$flag'" ;;
               esac
             done
+            if [ "${quota_hit:-0}" = 1 ]; then
+              # exit code 5 = daily quota spent: later requests would only fail too.
+              echo "**SKIPPED (daily quota exhausted)** \`$url\`" >> "$GITHUB_STEP_SUMMARY"
+              failed=1
+              continue
+            fi
             echo "::group::$url ${args[*]}"
-            if yta analyze "$url" "${args[@]}" < /dev/null > "$RUNNER_TEMP/yta.out" 2>&1; then status=ok; else status=FAILED; failed=1; fi
+            if yta analyze "$url" "${args[@]}" < /dev/null > "$RUNNER_TEMP/yta.out" 2>&1; then rc=0; else rc=$?; fi
+            if [ "$rc" = 0 ]; then status=ok; else status=FAILED; failed=1; fi
+            [ "$rc" = 5 ] && quota_hit=1
             cat "$RUNNER_TEMP/yta.out"
             echo "::endgroup::"
             {
