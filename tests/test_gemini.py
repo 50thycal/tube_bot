@@ -149,14 +149,26 @@ def test_dropped_connection_retry_when_enabled(sample):
     assert len(client.models.calls) == 2
 
 
-def test_daily_quota_fails_fast():
+def test_daily_quota_fails_fast(monkeypatch):
     from youtube_analyzer.gemini import QuotaExhausted
+
+    monkeypatch.setenv("YTA_MODEL_FALLBACKS", "")
 
     msg = "You exceeded your current quota. Quota exceeded for metric: generate_content_free_tier_requests, limit: 20. quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier"
     ex, client = _ex([_err(errors.ClientError, 429, msg)] * 3)
     with pytest.raises(QuotaExhausted, match="daily quota exhausted.*GenerateRequestsPerDayPerProjectPerModel-FreeTier"):
         ex.extract(URL)
     assert len(client.models.calls) == 1
+
+
+def test_daily_quota_switches_to_fallback_model(sample, monkeypatch):
+    monkeypatch.setenv("YTA_MODEL_FALLBACKS", "gemini-b,gemini-c")
+    msg = "Quota exceeded. quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+    client = FakeClient([_err(errors.ClientError, 429, msg), _err(errors.ClientError, 429, msg), _resp(sample)])
+    ex = GeminiExtractor(model="gemini-a", client=client, sleep=lambda s: None)
+    assert ex.extract(URL).content.summary
+    assert [c[0] for c in client.models.calls] == ["gemini-a", "gemini-b", "gemini-c"]
+    assert ex.model == "gemini-c"
 
 
 def test_per_minute_429_still_retried(sample):
