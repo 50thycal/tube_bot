@@ -1,2 +1,3 @@
 https://youtu.be/zGmsARTATvQ
 # queued 2026-11-06 from chat
+# retry 2026-11-06 08:16 UTC after quota reset (run #12 failed: Gemini high demand / daily cap)
