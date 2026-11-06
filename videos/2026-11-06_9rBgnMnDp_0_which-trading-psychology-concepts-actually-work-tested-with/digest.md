@@ -1,0 +1,464 @@
+# Which Trading Psychology Concepts Actually Work? (Tested With Claude)
+
+**Channel:** AI Pathways  
+**URL:** https://www.youtube.com/watch?v=9rBgnMnDp_0  
+**Duration:** 23:11:00
+
+<sub>schema 1.0 · model gemini-3.8-flash · interactions:prompt_json · analyzed 2026-11-06T04:18:57Z · 136,352 tokens</sub>
+
+## Summary
+
+The video quantitatively evaluates common trading psychology rules—such as stopping after consecutive losses, taking profits early, revenge trading, and skipping trades—by modeling a baseline profitable trader across 10,000 simulated trading years using Claude. The findings demonstrate that for an already profitable trader, behavioral rules that artificially truncate trading volume (such as daily profit targets or hesitation after losses) consistently reduce expected annual returns, while selective position sizing on high-conviction setups adds substantial value. For losing traders, however, any rule that reduces trade volume reduces losses. The video concludes with four copy-paste Claude prompts allowing traders to test these concepts and check their own trade histories for streakiness and tail risk.
+
+## Segments
+
+### [00:00:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=0s)–01:04:00 · Introduction and Background
+
+- The presenter pulled 83 common trading psychology concepts and tested them across 10,000 simulated trading years using Claude.
+- The rules fall into three categories: concepts that work and add significant money, concepts that do not work at all, and nuanced concepts dependent on individual edge and execution.
+- Presenter background: Studied Math and Economics at UCLA, worked over 3 years in investment banking, and spent the last 2 years building trading systems.
+
+### [01:04:01](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=3841s)–03:53:00 · Testing Methodology: Baseline Trader Simulation
+
+- Trading psychology concepts cannot be tested directly as feelings (tilt, fear, greed), but can be tested as actions: standing down, sizing down, skipping, or stopping.
+- The simulation is strategy-agnostic: rules are tested against an assumed baseline profitable trader edge rather than technical indicators.
+- Baseline trader parameters: 37% win rate, risking $500 per trade, average winner +$1,000 (2R), average loser -$500 (-1R), expected value +$50 per trade.
+- Account parameters: $50,000 starting account, 750 trades per year (approximately 3 trades per day).
+- Simulation scope: Monte Carlo simulation of 10,000 versions of that year run using Claude.
+- Introduces 'streakiness' (autocorrelation of outcomes): whether a loss makes the next trade more likely to lose.
+
+### [03:54:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=14040s)–05:58:00 · Dash 1: A Single Trade Means Nothing & Sample Size
+
+- 93.5% of simulated years contain a run of 10 losses in a row for the baseline trader (median longest losing streak in a year is 12 in a row).
+- A coin-flip trader (no edge) hits a 10-loss streak 99% of years; an expert trader (3.5x better than baseline) still hits a 10-loss streak 54% of years.
+- Even after 100 trades, there is a 24.5% chance that a truly profitable strategy shows a net loss.
+- Statistically, approximately 809 trades are required for a measured edge to converge near the true edge within a 95% confidence band.
+
+### [05:59:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=21540s)–07:54:00 · Dash 2: Revenge Trading / Chasing Money Back
+
+- Normal baseline trader median account after a year: $97,830.
+- Doubling size after every loss (revenge trading / Martingale) yields a median account of $157,834, because average position size increases by 3.5x.
+- However, doubling after a loss adds +2.1 percentage points (pp) extra chance of halving the account compared to random sizing up.
+- Without position size caps, 99.9% of simulated revenge trading accounts go broke (-$57,830 drawdown beyond initial capital).
+
+### [07:55:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=28500s)–09:21:00 · Dash 3: Hesitation After a Loss
+
+- Skipping trades due to hesitation costs money if trades are independent: skipping after every loss costs -$22,536/year (3 trades/day).
+- Sitting out the next trade after 2 consecutive losses skips ~28% of trading opportunities and costs ~$17,000/year; shutting down the laptop after a loss skips 59% of the year and costs ~$30,000.
+- The cost is a straight line: approximately -$600 for every 1% of annual trades skipped.
+- Caveat: If outcomes exhibit positive autocorrelation ('streaky' trader), sitting out breaks even at streakiness >0.08 and becomes profitable above that.
+
+### [09:22:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=33720s)–11:11:00 · Dash 4: Standing Down After Two Losses
+
+- For a calm trader with no streakiness, standing down after 2 losses costs -$8,442/year.
+- For a streaky trader, standing down after 2 losses gains +$14,721/year.
+- Impact varies by trade frequency: at 2 trades/day, the rule is worth $0; at 4 trades/day it breaks even; at 10 trades/day it is worth +$25,303/year.
+- Volume magnifies the cost or benefit of loss cooldowns.
+
+### [11:12:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=40320s)–13:02:00 · Dash 5: Take Your Profit and Walk Away (Daily Target)
+
+- Stopping trading once a daily profit target (+2R) is reached costs -$15,314/year for a profitable trader.
+- This is the only rule where streakiness makes the outcome worse: stopping on a win cuts off positive streaks.
+- Stopping at a daily target halves total annual profit compared to chasing the target, which only costs ~$3,000 at worst.
+
+### [13:03:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=46980s)–13:48:00 · Dash 6: Sizing Up After a Hot Streak
+
+- Testing sizing up after 2, 3, or 4 wins in a row, after new account highs, or when up on the day/week/month.
+- The frequency of triggers ranges from 5% (waiting for 3 wins) to 52% (being up on the month).
+- The expected monetary value of timing size increases strictly based on win streaks is $0 (within standard error bars).
+- Winning streaks do not predict future winning probability in independent trade streams.
+
+### [13:49:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=49740s)–16:08:00 · Dash 7: Be Picky — Fewer vs. Better Trades
+
+- Capping trades per day (e.g. first 1, 2, or 3 of the day) costs between -$466 and -$35,913/year without improving quality.
+- Grading trade setups and skipping below-median setups produces -$85/year (flat / break-even).
+- Being excessively selective (taking only the top third or top 17%) reduces annual P&L by -$12,884 and -$28,872 respectively.
+- However, taking all trades and sizing up to 1.5x on the top half yields +$32,049/year.
+- Transaction cost sensitivity: if slippage and commissions rise to 0.06R/trade, being picky costs -$12,575 instead of -$85.
+
+### [16:09:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=58140s)–17:00:00 · Dash 9: Sizing Up on Best Setups
+
+- Cleanest quantitative result in the study: sizing up on top setups consistently outperforms flat sizing.
+- A trader only needs a +0.62 percentage point win-rate edge on their best setups to justify sizing up at 1.5x.
+- Break-even win rate spread requirements: 1.25x sizing requires +0.74 pp; 1.50x sizing requires +0.62 pp; 2.00x sizing requires +0.85 pp; 3.00x sizing requires +1.48 pp.
+
+### [17:01:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=61260s)–18:51:00 · Dash 10: Tail Risk and Capital Protection
+
+- In real markets, stop-losses can experience slippage and black swan gaps (e.g., 1 in 100 trades losing 10x or 20x the intended stop).
+- At 1% risk per trade with 1 in 100 trades blowing 20x through stop, chance of halving account is 17.1%.
+- At 2% risk per trade, chance of halving account jumps to 56.2%.
+- At 5% risk per trade, chance of halving account reaches 99.9%.
+- The Kelly Criterion suggests ~5% optimal bet for the baseline trader, but Kelly assumes zero gap risk and perfect knowledge of edge.
+
+### [18:52:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=67920s)–21:17:00 · Dash 12: Matrix Summary & Universal Rules
+
+- Universal rules regardless of edge: 93.5% of years have 10-loss streaks; 809 trades needed to measure edge; 99.8% of years experience a 15-loss streak; sizing up on hot streaks is worth -$1,634.
+- Losing traders benefit from any rule that cuts trade volume (-75% loss reduction from volume reduction).
+- Profitable traders lose money by skipping trades; they maximize returns by taking setups and sizing up on top reads (capped at 1.5x).
+- Day traders lose ~75% of profit if daily trade caps prevent executing their full strategy.
+
+### [21:18:00](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=76680s)–23:11:00 · Implementation: 4 Claude Prompts for Trade Logs
+
+- Presenter shares 4 prompts to run against exported broker trade history (CSV format) in Claude.
+- Prompt 1: Streakiness Check (evaluates post-loss win rate vs baseline; needs ~750 trades).
+- Prompt 2: Replay Rules on History for Day Traders (tests skipping after loss, cooldown after 2 losses, daily loss limit, daily profit target).
+- Prompt 3: Conviction Audit for Profitable Traders (checks if A+ setup grading win rate spread exceeds 0.6 pp).
+- Prompt 4: Survival Check (flags trades risking >2% or tail risk >20% account loss).
+
+## Claims
+
+| ts | claim | evidence | caveats |
+|---|---|---|---|
+| [00:03:54](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=234s) | 93.5% of years contain a run of ten consecutive losses for a trader with a 37% win rate and 2:1 reward-to-risk ratio. | backtest | Assumes 750 trades per year and independent trade probabilities. |
+| [00:05:34](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=334s) | A trader needs approximately 809 trades before their measured edge reliably converges near their true edge within a 95% confidence band. | data | Derived from binomial distribution confidence interval modeling. |
+| [00:06:07](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=367s) | Doubling position size after every loss increases median annual P&L for a profitable trader from $97,830 to $157,834, but increases the probability of halving the account by 2.1 percentage points. | backtest | Requires capping max risk; without a cap, 99.9% of accounts blow up. |
+| [00:08:27](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=507s) | Skipping the next trade after two consecutive losses costs a non-streaky profitable trader approximately $17,000 per year. | backtest | Assumes trade outcomes are independent (no streakiness) and the trader takes 3 trades/day on average. |
+| [00:11:29](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=689s) | Stopping trading after reaching a daily profit target of +2R costs a profitable trader approximately $15,314 per year. | backtest | Only applies to traders who already possess a positive mathematical expectancy. |
+| [00:13:28](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=808s) | Sizing up after a winning streak yields $0 in additional expected value compared to random sizing increases. | data | Assumes trade outcomes are statistically independent. |
+| [00:16:09](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=969s) | A trader only needs their best setups to win 0.62 percentage points more often than average to profitably size up to 1.5x flat sizing. | backtest | Assumes low transaction costs; costs widen the required spread. |
+| [00:17:35](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=1055s) | If 1 in 100 trades slips 20x through the stop loss, risking 5% per trade results in a 99.9% probability of losing half the account. | backtest | Modeled across 750 trades per year. |
+
+## Visuals
+
+### [00:00:16](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=16s) · slide · Which half of this applies to you (confidence: high)
+
+**Axes / columns:** Category; Metric / Rule; Value
+
+**Values (as shown):**
+
+- `DASH 12`
+- `IF YOU ARE LOSING MONEY: every rule in this video pays, since your edge drops below zero`
+- `stop after two losses: +0.0050R`
+- `stop at a daily target: +0.0053R`
+- `cap one trade a day: +0.0083R`
+- `skip after a loss: +0.0089R`
+- `halve size for a week: +0.0106R`
+- `IF YOU ARE MAKING MONEY: trade more, and lean on your best reads`
+- `take every setup: $35,913`
+- `size up on your best: $13,720`
+- `cap that sizing at 1.5x: 0.62 pp`
+- `at 3x the bar rises to: 1.48 pp`
+- `unless results streak (p: 0.08+): $41,187`
+- `IF YOU ARE A DAY TRADER: the caps are the expensive ones`
+- `-75% of the year, to cap one trade a day`
+- `100 trades a year: 0%`
+- `250 a year: 0%`
+- `750 a year: -75%`
+- `2,000 a year: -95%`
+- `IF YOU TRADE SLOWLY: the daily rules never fire at all`
+- `cap one trade a day: $0`
+- `stop after two losses: $0`
+- `stop at a daily target: $0`
+- `skip after a loss: -$1,518`
+- `TRUE WHEREVER YOU ARE`
+- `93.5% losing streaks are normal`
+- `809 trades one trade tells you nothing`
+- `99.8% the 15-loss tripwire fires anyway`
+- `-$1,634 hot-streak sizing does nothing`
+
+**Argues:** Provides a comprehensive summary dashboard comparing how psychology and risk management rules affect losing vs. profitable traders, day traders vs. swing traders, and identifies universal statistical realities.
+
+### [00:02:10](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=130s) · diagram · 3 Their numbers (confidence: high)
+
+**Axes / columns:** Parameter; Value
+
+**Values (as shown):**
+
+- `37% win`
+- `+$1,000 a winner`
+- `-$500 a loser`
+- `+$50 a trade, on average`
+
+**Argues:** Defines the baseline parameters of the simulated trader possessing a positive mathematical expectancy.
+
+### [00:02:30](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=150s) · diagram · 4 One year (confidence: high)
+
+**Axes / columns:** Parameter; Value
+
+**Values (as shown):**
+
+- `$50,000 start`
+- `750 trades`
+- `10,000 versions of that year`
+
+**Argues:** Illustrates a simulated annual equity curve and sequence of wins and losses for 750 trades starting from $50k.
+
+### [00:02:38](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=158s) · chart · 5 Ten thousand (confidence: high)
+
+**Axes / columns:** Annual Return / Account Ending Value ($); Frequency
+
+**Values (as shown):**
+
+- `median $97,830`
+- `$35k`
+- `$219k`
+- `10,000 versions of that year`
+
+**Argues:** Shows the distribution of ending account balances across 10,000 Monte Carlo simulated years of the baseline strategy.
+
+### [00:03:54](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=234s) · chart · A single trade means nothing (confidence: high)
+
+**Axes / columns:** Left Chart: Losses in a row (5, 10, 15, 20) vs Chance of losing run in one year (0.0% to 100.0%); Right Chart: Trades observed (10, 50, 100, 500, 1000) vs Measured edge in R (-1.00R to 1.00R)
+
+**Values (as shown):**
+
+- `DASH 1`
+- `93.5% of years contain a run of ten losses in a row`
+- `a coin-flip trader: ~99% at 10 losses`
+- `our trader: 93.5% at 10 losses`
+- `an expert, 3.5x better: 54% at 10 losses`
+- `Measured edge, with its 95% confidence band`
+- `your true edge (yellow dashed line at +0.10R)`
+- `100 trades: 24.5% error probability`
+- `809 trades: convergence point`
+
+**Argues:** Demonstrates that losing streaks of 10+ are statistically normal even for expert traders, and that hundreds of trades are needed to measure true edge.
+
+### [00:05:59](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=359s) · chart · Never chase your money back (confidence: high)
+
+**Axes / columns:** Left Chart: Rule Condition vs Median Account After a Year ($0 to $200k); Right Chart: Chance of halving your account (0% to 100%) vs Median account after a year ($0 to $100k)
+
+**Values (as shown):**
+
+- `DASH 2`
+- `+2.1 pp extra chance of halving the account, from doing it right after a loss rather than at the same average size at random moments`
+- `normal size: $97,830`
+- `double after every loss: $157,834`
+- `same sizes, shuffled in time: $144,141`
+- `More risk buys more money, until it doesn't`
+- `2x: $36,241 at 7% halving chance`
+- `3x: $56,475 at 14% halving chance`
+- `5x: $76,245 at 27% halving chance`
+- `no cap: -$57,830, 99.9% go broke at 100% chance of halving`
+
+**Argues:** Shows that revenge trading increases median returns purely due to higher average leverage, but drastically raises the risk of severe drawdown or account ruin.
+
+### [00:07:55](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=475s) · chart · Hesitation after a loss (confidence: high)
+
+**Axes / columns:** Left: Share of your year the rule skips (0% to 59%) vs Cost against how much trading you skip ($0 to -$40k); Right: How streaky your results are (0.00 to 0.15) vs Cost against streakiness (-$40k to $40k)
+
+**Values (as shown):**
+
+- `DASH 3`
+- `-$22,536 a year of flinching after every loss, at three trades a day`
+- `after 3 losses: skips 8%, costs -$5k`
+- `after 2 losses: skips 28%, costs -$17k`
+- `after every loss: skips 48%, costs -$22,536`
+- `shut the laptop: skips 59%, costs -$30k`
+- `Breaks even 0.08 streakiness`
+- `sit out after a loss (yellow upward line)`
+
+**Argues:** Proves that skipping trades after losses costs money linearly for independent outcomes, but becomes profitable if a trader's outcomes are positively autocorrelated above 0.08.
+
+### [00:09:22](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=562s) · chart · Standing down after two losses (confidence: high)
+
+**Axes / columns:** X: Trades per day (2 to 12); Left Y: Value of the rule for the year (-$10k to $30k); Right Y: Share of skipped trades that were genuinely damaged (0% to 12%)
+
+**Values (as shown):**
+
+- `DASH 4`
+- `$0 -> $25,303 value of the identical rule at two trades a day and at ten`
+- `what it is worth (yellow line) rises from -$8,442 to +$25,303`
+- `how often it is right (dashed line) rises with volume`
+- `TRUE ABOVE FOUR TRADES A DAY`
+
+**Argues:** Illustrates that cooldown rules after two losses are worthless or detrimental at low daily trade frequencies, but become highly valuable as daily trade frequency exceeds 4 trades/day.
+
+### [00:11:12](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=672s) · chart · Take your profit and walk away (confidence: high)
+
+**Axes / columns:** Left: How much edge a forced trade gives up (0% to 10%) vs Stopping versus chasing the target (-$40k to $20k); Right: How streaky your results are (0.00 to 0.15) vs Cost against streakiness (-$40k to $20k)
+
+**Values (as shown):**
+
+- `DASH 5`
+- `-$15,314 a year of stopping once you hit the target`
+- `stopping at the 90th halves together`
+- `chasing the target costs ~$3k`
+- `stop at a +2R target (yellow line descends from -$15k to -$40k)`
+- `stop after two losses (gray line rises from -$8k to +$20k)`
+
+**Argues:** Demonstrates that daily profit targets cost money by cutting off positive runs, worsening further when returns are streaky.
+
+### [00:13:03](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=783s) · chart · Sizing up after a hot streak (confidence: high)
+
+**Axes / columns:** Left: Trigger type vs How often each trigger fires (0% to 60%); Right: Trigger type vs What the timing is worth (-$1.0k to $1.0k)
+
+**Values (as shown):**
+
+- `DASH 6`
+- `5% -> 52% how often a 'hot streak' rule fires: waiting for three wins, versus being up on the month`
+- `4 wins in a row: 2%`
+- `3 wins in a row: 5%`
+- `2 wins in a row: 7%`
+- `at a new account high: 14%`
+- `up on the day: 33%`
+- `up on the week: 44%`
+- `up on the month: 52%`
+- `What the timing is worth: all confidence bars overlap $0k`
+- `FALSE - THE MONEY IS LEVERAGE, NOT STREAKS`
+
+**Argues:** Shows that sizing up after win streaks does not add value over random sizing because streaks do not indicate increased forward win probability in independent trials.
+
+### [00:13:49](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=829s) · chart · Be picky, take fewer and better trades (confidence: high)
+
+**Axes / columns:** Left: Four ways to use the same weak read vs P&L ($); Middle: How selective to be vs P&L ($); Right: Cost sensitivity vs P&L ($)
+
+**Values (as shown):**
+
+- `DASH 7`
+- `$32,049 vs -$85 same reading ability: sizing up on the good setups, versus skipping the bad ones`
+- `take first 1 of day: -$35,913`
+- `take first 2 of day: -$466`
+- `take first 3 of day: -$85`
+- `above median read (skip): -$85`
+- `size up the strong half: $32,049`
+- `top half: -$85`
+- `top third: -$12,884`
+- `top 17%: -$28,872`
+- `at 0.02R a trade: -$85`
+- `at 0.06R a trade: -$12,575`
+
+**Argues:** Demonstrates that skipping marginal setups barely helps or hurts, extreme pickiness drastically cuts profits, while sizing up on top-graded setups generates massive alpha.
+
+### [00:16:09](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=969s) · chart · Size up on your best setups (confidence: high)
+
+**Axes / columns:** Left: Size multiplier (1.25x, 1.50x, 2.00x, 3.00x) vs Break-even spread (pp); Right: Setup read advantage (pp) vs Value as read improves ($0 to $30k)
+
+**Values (as shown):**
+
+- `DASH 9`
+- `0.62 pp how much more often your best setups need to win before sizing up beats sizing flat`
+- `1.25x: 0.74 pp`
+- `1.50x: 0.62 pp (highlighted in orange)`
+- `2.00x: 0.85 pp`
+- `3.00x: 1.48 pp`
+- `Value at 1.5x sizing scales linearly to >$30k as read improves to +8.27 pp`
+
+**Argues:** Identifies 1.5x as the optimal sizing sweet spot requiring only a 0.62 pp edge difference on A+ setups to outperform flat sizing.
+
+### [00:17:01](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=1021s) · chart · Protect your capital above everything (confidence: high)
+
+**Axes / columns:** X: Net risk per trade as % of account (0.25% to 5%); Y: Chance of ruin / halving account (0.0% to 100.0%)
+
+**Values (as shown):**
+
+- `DASH 10`
+- `17.1% -> 99.9% chance of halving the account at 1% risk versus 5%, once one trade in a hundred blows 20x through your stop (2% sits at 56.2%)`
+- `stop always fills: lowest curve`
+- `1 in 100 costs 10x: middle curve`
+- `1 in 100 costs 20x: top curve`
+- `The Kelly Criterion at 5% is NOT optimal once tail risk exists`
+
+**Argues:** Shows that 1% risk per trade is necessary to survive realistic tail-risk stop-loss gap events, whereas 2% to 5% risk leads to near-certain account halving.
+
+### [00:21:40](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=1300s) · slide · PROMPT 1 - EVERYONE The streakiness check (confidence: high)
+
+**Values (as shown):**
+
+- `PROMPT 1 - EVERYONE`
+- `The streakiness check`
+- `The one from the video. Needs about a year of trades.`
+- `Prompt instructions to paste into Claude analyzing trade history CSV for win rate across all trades vs win rate after 2 losses in a row.`
+
+**Argues:** Presents a Claude prompt to detect autocorrelation and streakiness in a user's trade history.
+
+### [00:21:59](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=1319s) · slide · PROMPT 2 - DAY TRADERS Replay the rules on your history (confidence: high)
+
+**Values (as shown):**
+
+- `PROMPT 2 - DAY TRADERS`
+- `Replay the rules on your history`
+- `What each rule would have done to your actual year.`
+- `Replays: 1. Skip next trade after every loss; 2. Stop the day after two losses in a row; 3. Stop the day once I down 2x my average per-trade risk; 4. Stop the day once I up 2x my average per-trade risk.`
+
+**Argues:** Presents a Claude prompt to backtest four behavioral stop/skip rules directly against historical user trading logs.
+
+### [00:22:15](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=1335s) · slide · PROMPT 3 - PROFITABLE TRADERS The conviction audit (confidence: high)
+
+**Values (as shown):**
+
+- `PROMPT 3 - PROFITABLE TRADERS`
+- `The conviction audit`
+- `Only works if you grade setups before entry.`
+- `Analyzes win rate of top-graded setups vs everything else and checks if spread exceeds 0.6 percentage points.`
+
+**Argues:** Presents a Claude prompt to evaluate if a trader's discretionary trade grading is accurate enough to implement asymmetric position sizing.
+
+### [00:22:30](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=1350s) · slide · PROMPT 4 - EVERYONE The survival check (confidence: high)
+
+**Values (as shown):**
+
+- `PROMPT 4 - EVERYONE`
+- `The survival check`
+- `Can one bad fill end your account.`
+- `Works out average risk per trade, single worst trade as % of account, and flags any trade losing >20% account equity.`
+
+**Argues:** Presents a Claude prompt to identify tail risk, slippage exposure, and capital destruction vulnerabilities in historical trades.
+
+## Formulas
+
+- [00:18:22](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=1102s) `Kelly Criterion (mentioned conceptually as optimal bet size formula)`
+  - `Kelly %`: Optimal theoretical percentage of capital to risk per trade to maximize logarithmic capital growth under known win rate and payoff ratio
+
+## Strategies
+
+### Baseline Profitable Day Trader ([00:02:10](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=130s))
+
+**Logic:** Trade a positive expectancy system consistently across 750 trades per year without discretionary emotion or behavioral intervention.
+
+**Entry rules:**
+- Take every valid technical/discretionary setup that meets baseline edge criteria (~3 trades/day).
+
+**Exit rules:**
+- Take profit at +2R (+$1,000 on $500 risk).
+- Stop loss at -1R (-$500).
+
+| parameter | value |
+|---|---|
+| Win Rate | 37% |
+| Starting Capital | $50,000 |
+| Base Risk per Trade | $500 (1%) |
+| Reward-to-Risk Ratio | 2:1 (+2R / -1R) |
+| Annual Trade Volume | 750 trades |
+
+**Markets/assets:** Strategy-agnostic (equities, futures, forex, or crypto)
+
+**Stated performance:** Median annual ending balance of $97,830 on $50,000 starting account (+$47,830 profit).
+
+**Costs/slippage mentioned:** yes — Evaluated under zero cost as well as 0.02R to 0.06R slippage and commissions per trade.
+
+### Asymmetric Conviction Sizing (1.5x on Top Setups) ([00:15:08](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=908s))
+
+**Logic:** Grade setups prior to entry; take all setups flat at 1.0x, but size up to 1.5x on setups graded in the top half of expected quality.
+
+**Entry rules:**
+- Grade setup prior to entry based on confluence/read quality.
+- Enter top 50% highest quality setups at 1.5x standard risk.
+- Enter remaining 50% setups at 1.0x standard risk.
+
+**Exit rules:**
+- Same as baseline (+2R profit target, -1R stop loss).
+
+| parameter | value |
+|---|---|
+| Size Multiplier on Top Setups | 1.5x |
+| Minimum Win Rate Edge Required on Top Setups | +0.62 percentage points |
+
+**Markets/assets:** Strategy-agnostic
+
+**Stated performance:** Generates +$32,049 in additional annual P&L compared to flat sizing ($13,720 to $32,049 depending on setup read accuracy).
+
+**Costs/slippage mentioned:** yes — Requires transaction costs to remain below 0.06R per trade to preserve net gains.
+
+## Tools & data
+
+| name | type | how used |
+|---|---|---|
+| Claude / Claude Code | platform | Used as the computational engine to simulate 10,000 trading years, parse 83 psychology rules, run Monte Carlo simulations, and execute the 4 analytical user prompts. |
+| Broker CSV Trade History Export | dataset | Input format for individual traders to feed their historical executions into Claude for streakiness, conviction, and survival auditing. |
+| Skool Community | platform | Host's AI-focused trading community linked in video description. |
+
+## Open questions
+
+- [00:03:20](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=200s) **The video states Claude was used to run 10,000 simulated trading years across 83 rules.** — The underlying code (Python/JS script), exact prompt architecture, random seed generation methods, and full statistical output logs for all 83 concepts are not displayed or provided in full in the video.
+- [00:14:15](https://www.youtube.com/watch?v=9rBgnMnDp_0&t=855s) **The simulation models a trader's 'reading ability' to predict trade quality before entry.** — The exact mathematical model used to simulate subjective human setup grading error (signal vs. noise distribution) is not detailed.
