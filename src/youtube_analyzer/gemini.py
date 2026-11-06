@@ -286,7 +286,9 @@ class GeminiExtractor:
                 if code in HEAVY_CODES:
                     raise TooLong(f"server deadline exceeded (HTTP {code}): {e}") from e
                 if code in RETRYABLE_CODES and attempt < self.max_retries:
-                    delay = min(60.0, 2.0 * 2**attempt) + random.uniform(0, 1)
+                    # 503 "high demand" spikes last minutes, not seconds: wait longer.
+                    base = 10.0 if code == 503 else 2.0
+                    delay = min(90.0, base * 2**attempt) + random.uniform(0, 1)
                     log.warning("Gemini HTTP %s, retrying in %.1fs (%d/%d)", code, delay, attempt + 1, self.max_retries)
                     self._sleep(delay)
                     attempt += 1

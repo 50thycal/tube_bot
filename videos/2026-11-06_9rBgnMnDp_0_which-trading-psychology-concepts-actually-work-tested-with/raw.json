@@ -3,7 +3,7 @@
   "segments": [
     {
       "start_ts": "00:00:00",
-      "end_ts": "01:04:00",
+      "end_ts": "00:01:04",
       "topic": "Introduction and Background",
       "key_points": [
         "The presenter pulled 83 common trading psychology concepts and tested them across 10,000 simulated trading years using Claude.",
@@ -12,8 +12,8 @@
       ]
     },
     {
-      "start_ts": "01:04:01",
-      "end_ts": "03:53:00",
+      "start_ts": "00:01:04",
+      "end_ts": "00:03:53",
       "topic": "Testing Methodology: Baseline Trader Simulation",
       "key_points": [
         "Trading psychology concepts cannot be tested directly as feelings (tilt, fear, greed), but can be tested as actions: standing down, sizing down, skipping, or stopping.",
@@ -25,8 +25,8 @@
       ]
     },
     {
-      "start_ts": "03:54:00",
-      "end_ts": "05:58:00",
+      "start_ts": "00:03:54",
+      "end_ts": "00:05:58",
       "topic": "Dash 1: A Single Trade Means Nothing & Sample Size",
       "key_points": [
         "93.5% of simulated years contain a run of 10 losses in a row for the baseline trader (median longest losing streak in a year is 12 in a row).",
@@ -36,8 +36,8 @@
       ]
     },
     {
-      "start_ts": "05:59:00",
-      "end_ts": "07:54:00",
+      "start_ts": "00:05:59",
+      "end_ts": "00:07:54",
       "topic": "Dash 2: Revenge Trading / Chasing Money Back",
       "key_points": [
         "Normal baseline trader median account after a year: $97,830.",
@@ -47,8 +47,8 @@
       ]
     },
     {
-      "start_ts": "07:55:00",
-      "end_ts": "09:21:00",
+      "start_ts": "00:07:55",
+      "end_ts": "00:09:21",
       "topic": "Dash 3: Hesitation After a Loss",
       "key_points": [
         "Skipping trades due to hesitation costs money if trades are independent: skipping after every loss costs -$22,536/year (3 trades/day).",
@@ -58,8 +58,8 @@
       ]
     },
     {
-      "start_ts": "09:22:00",
-      "end_ts": "11:11:00",
+      "start_ts": "00:09:22",
+      "end_ts": "00:11:11",
       "topic": "Dash 4: Standing Down After Two Losses",
       "key_points": [
         "For a calm trader with no streakiness, standing down after 2 losses costs -$8,442/year.",
@@ -69,8 +69,8 @@
       ]
     },
     {
-      "start_ts": "11:12:00",
-      "end_ts": "13:02:00",
+      "start_ts": "00:11:12",
+      "end_ts": "00:13:02",
       "topic": "Dash 5: Take Your Profit and Walk Away (Daily Target)",
       "key_points": [
         "Stopping trading once a daily profit target (+2R) is reached costs -$15,314/year for a profitable trader.",
@@ -79,8 +79,8 @@
       ]
     },
     {
-      "start_ts": "13:03:00",
-      "end_ts": "13:48:00",
+      "start_ts": "00:13:03",
+      "end_ts": "00:13:48",
       "topic": "Dash 6: Sizing Up After a Hot Streak",
       "key_points": [
         "Testing sizing up after 2, 3, or 4 wins in a row, after new account highs, or when up on the day/week/month.",
@@ -90,8 +90,8 @@
       ]
     },
     {
-      "start_ts": "13:49:00",
-      "end_ts": "16:08:00",
+      "start_ts": "00:13:49",
+      "end_ts": "00:16:08",
       "topic": "Dash 7: Be Picky — Fewer vs. Better Trades",
       "key_points": [
         "Capping trades per day (e.g. first 1, 2, or 3 of the day) costs between -$466 and -$35,913/year without improving quality.",
@@ -102,8 +102,8 @@
       ]
     },
     {
-      "start_ts": "16:09:00",
-      "end_ts": "17:00:00",
+      "start_ts": "00:16:09",
+      "end_ts": "00:17:00",
       "topic": "Dash 9: Sizing Up on Best Setups",
       "key_points": [
         "Cleanest quantitative result in the study: sizing up on top setups consistently outperforms flat sizing.",
@@ -112,8 +112,8 @@
       ]
     },
     {
-      "start_ts": "17:01:00",
-      "end_ts": "18:51:00",
+      "start_ts": "00:17:01",
+      "end_ts": "00:18:51",
       "topic": "Dash 10: Tail Risk and Capital Protection",
       "key_points": [
         "In real markets, stop-losses can experience slippage and black swan gaps (e.g., 1 in 100 trades losing 10x or 20x the intended stop).",
@@ -124,8 +124,8 @@
       ]
     },
     {
-      "start_ts": "18:52:00",
-      "end_ts": "21:17:00",
+      "start_ts": "00:18:52",
+      "end_ts": "00:21:17",
       "topic": "Dash 12: Matrix Summary & Universal Rules",
       "key_points": [
         "Universal rules regardless of edge: 93.5% of years have 10-loss streaks; 809 trades needed to measure edge; 99.8% of years experience a 15-loss streak; sizing up on hot streaks is worth -$1,634.",
@@ -135,8 +135,8 @@
       ]
     },
     {
-      "start_ts": "21:18:00",
-      "end_ts": "23:11:00",
+      "start_ts": "00:21:18",
+      "end_ts": "00:23:11",
       "topic": "Implementation: 4 Claude Prompts for Trade Logs",
       "key_points": [
         "Presenter shares 4 prompts to run against exported broker trade history (CSV format) in Claude.",
@@ -659,7 +659,7 @@
     "url": "https://www.youtube.com/watch?v=9rBgnMnDp_0",
     "title": "Which Trading Psychology Concepts Actually Work? (Tested With Claude)",
     "channel": "AI Pathways",
-    "duration_s": 83460
+    "duration_s": 1391
   },
   "run": {
     "model": "gemini-3.8-flash",

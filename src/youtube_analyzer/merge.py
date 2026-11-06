@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import logging
+
 from .schema import ContentExtraction, Window
 from .timestamps import fmt_ts, normalize_ts, parse_ts, sort_key
+
+log = logging.getLogger(__name__)
 
 # Tolerance before we decide a window's timestamps are clip-relative.
 _RELATIVE_SLACK_S = 30
@@ -50,8 +54,60 @@ def detect_offset(c: ContentExtraction, window: Window) -> int:
     return window.start_s if before * 2 > len(secs) else 0
 
 
+def _ts_groups(c: ContentExtraction) -> dict[str, list[str]]:
+    return {
+        "segments": [t for s in c.segments for t in (s.start_ts, s.end_ts)],
+        "claims": [x.ts for x in c.claims],
+        "visuals": [x.ts for x in c.visuals],
+        "formulas": [x.ts for x in c.formulas],
+        "strategies": [x.ts for x in c.strategies],
+        "open_questions": [x.ts for x in c.open_questions],
+    }
+
+
+def _as_mmss(ts: str) -> str:
+    """'23:11:00' written as MM:SS:xx -> '00:23:11'. Unparseable values pass through."""
+    parts = ts.strip().split(":")
+    if len(parts) == 3 and all(p.isdigit() for p in parts):
+        return fmt_ts(int(parts[0]) * 60 + int(parts[1]))
+    return ts
+
+
+def repair_ts_scale(c: ContentExtraction) -> ContentExtraction:
+    """Fix a group of timestamps written as MM:SS:00 instead of HH:MM:SS.
+
+    Seen live: one video's segments came back as '01:04:00'..'23:11:00' (1:04 to
+    23:11) while its visuals and claims were correct HH:MM:SS, which made a
+    23-minute video look 23 hours long. A group whose latest timestamp is far
+    past every other group's is re-read as minutes:seconds.
+    """
+    groups = {g: [s for s in (parse_ts(t) for t in ts) if s is not None] for g, ts in _ts_groups(c).items()}
+    maxes = {g: max(v) for g, v in groups.items() if v}
+    if len(maxes) < 2:
+        return c
+    bad = []
+    for g, m in maxes.items():
+        others = [v for k, v in maxes.items() if k != g]
+        ref = max(others)
+        if m > 3 * ref and m > ref + 1800:
+            bad.append(g)
+    if not bad or len(bad) == len(maxes):
+        return c
+    log.warning("timestamps in %s look like MM:SS:00; re-reading them as minutes:seconds", ", ".join(bad))
+    c = c.model_copy(deep=True)
+    if "segments" in bad:
+        for s in c.segments:
+            s.start_ts, s.end_ts = _as_mmss(s.start_ts), _as_mmss(s.end_ts)
+    for g in bad:
+        if g != "segments":
+            for item in getattr(c, g):
+                item.ts = _as_mmss(item.ts)
+    return c
+
+
 def normalize_window(c: ContentExtraction, window: Window | None) -> ContentExtraction:
     """Return a copy with timestamps in canonical HH:MM:SS, absolute to the full video."""
+    c = repair_ts_scale(c)
     off = detect_offset(c, window) if window is not None else 0
     c = c.model_copy(deep=True)
 
