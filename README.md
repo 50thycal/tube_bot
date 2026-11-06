@@ -22,6 +22,8 @@ pytest
 | `YTA_ENGINE` | `interactions` | `interactions` (one background Interactions job, falls back to static), `static` (generate_content windows) or `agentic` (experimental) |
 | `YTA_THINKING_LEVEL` | model default | `minimal`/`low`/`medium`/`high` (both engines) |
 | `YTA_STREAM_THOUGHTS` | `1` | static engine: stream thought summaries so bytes flow before the JSON starts (`0` to disable) |
+| `YTA_MODEL_FALLBACKS` | `gemini-3.7-flash,gemini-3.6-flash` | when a model's free daily quota is spent, continue on the next (mid-video if needed); `""` disables |
+| `YTA_OVERLOAD_RETRIES` | `0` | resubmit an Interactions job rejected within seconds this many times before falling back (each attempt spends a request) |
 | `YTA_AGENTIC_TIMEOUT_S` | `1800` | give up (and cancel) a background interaction after this long |
 | `YTA_CHUNK_MINUTES` | `7` | static engine: window size for long videos |
 | `YTA_SINGLE_PASS_MAX_MINUTES` | `7` | static engine: videos of known length up to this get a single request |

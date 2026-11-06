@@ -27,7 +27,7 @@ import httpx
 from pydantic import ValidationError
 
 from . import prompt
-from .gemini import CallResult, ExtractionFailed, QuotaExhausted, classify_error, daily_quota_error
+from .gemini import CallResult, ExtractionFailed, QuotaExhausted, classify_error, daily_quota_error, fallback_models
 from .metadata import VideoUnavailable
 from .schema import ContentExtraction, Usage
 
@@ -79,9 +79,12 @@ class AgenticExtractor:
         low_res: bool = False,
     ):
         self.model = model
+        self.fallbacks = fallback_models(model)
         self.processing = processing
         self.low_res = low_res
-        self.overload_retries = int(os.environ.get("YTA_OVERLOAD_RETRIES", 2))
+        # Off by default: in practice a job rejected within seconds was rejected the
+        # same way on every resubmission (6/6), and each attempt spends a request.
+        self.overload_retries = int(os.environ.get("YTA_OVERLOAD_RETRIES", 0))
         self._client = client
         self.poll_s = poll_s
         self.timeout_s = timeout_s or float(os.environ.get("YTA_AGENTIC_TIMEOUT_S", 1800))
@@ -121,11 +124,17 @@ class AgenticExtractor:
                     last = e
                     # A job that fails within seconds, before the model produced anything,
                     # was seen during Gemini "high demand" spikes: wait and resubmit.
-                    if getattr(e, "fast_fail", False) and attempt < self.overload_retries:
-                        delay = 30.0 * 2**attempt
-                        log.warning("%s (%s) failed fast (likely overload); retrying in %.0fs", self.processing, variant, delay)
-                        self._sleep(delay)
-                        continue
+                    if getattr(e, "fast_fail", False):
+                        if attempt < self.overload_retries:
+                            delay = 30.0 * 2**attempt
+                            log.warning("%s (%s) failed fast; retrying in %.0fs", self.processing, variant, delay)
+                            self._sleep(delay)
+                            continue
+                        # Rejected before producing anything: the other variant gets the
+                        # same rejection, so hand over to the caller's fallback now.
+                        log.warning("%s (%s) rejected within seconds; not retrying", self.processing, variant)
+                        last.usage = spent
+                        raise last
                     log.warning("%s (%s) failed: %s", self.processing, variant, e)
                     break
                 res.usage = res.usage.add(spent)
@@ -156,7 +165,7 @@ class AgenticExtractor:
         if self.thinking_level:
             kwargs["generation_config"] = {"thinking_level": self.thinking_level}
 
-        interaction = self._retry("create", lambda: self.client.interactions.create(**kwargs))
+        interaction = self._retry("create", lambda: self.client.interactions.create(**{**kwargs, "model": self.model}))
         iid = interaction.id
         log.info(
             "%s interaction %s (%s): %s", self.processing, iid, "response_format" if structured else "prompt_json", interaction.status
@@ -213,6 +222,11 @@ class AgenticExtractor:
                     raise
                 quota = daily_quota_error(e)
                 if quota is not None:
+                    if self.fallbacks:
+                        nxt = self.fallbacks.pop(0)
+                        log.warning("daily quota spent on %s; continuing on %s", self.model, nxt)
+                        self.model, attempt = nxt, 0
+                        continue
                     raise quota from e
                 code = _status_code(e)
                 transient = isinstance(e, httpx.TransportError) or code in RETRYABLE_STATUS

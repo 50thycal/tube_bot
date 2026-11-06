@@ -45,12 +45,18 @@ class Result:
 class _Run:
     usage: Usage = field(default_factory=Usage)
     calls: int = 0
-    model_version: str = ""
+    models: list[str] = field(default_factory=list)
+
+    @property
+    def model_version(self) -> str:
+        # More than one entry when a daily quota forced a switch to a fallback model.
+        return "+".join(self.models)
 
     def record(self, res: CallResult) -> None:
         self.usage = self.usage.add(res.usage)
         self.calls += 1
-        self.model_version = res.model_version or self.model_version
+        if res.model_version and res.model_version not in self.models:
+            self.models.append(res.model_version)
 
     def record_failure(self, e: Exception) -> None:
         u = getattr(e, "usage", None)

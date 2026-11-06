@@ -112,6 +112,16 @@ def resolve_model(cli_value: str | None = None) -> str:
     return cli_value or os.environ.get("YTA_MODEL") or DEFAULT_MODEL
 
 
+# Free-tier request quotas are per model, so when one model's daily quota is
+# spent the run continues on the next. Set YTA_MODEL_FALLBACKS="" to disable.
+DEFAULT_FALLBACK_MODELS = "gemini-3.7-flash,gemini-3.6-flash"
+
+
+def fallback_models(primary: str) -> list[str]:
+    raw = os.environ.get("YTA_MODEL_FALLBACKS", DEFAULT_FALLBACK_MODELS)
+    return [m.strip() for m in raw.split(",") if m.strip() and m.strip() != primary]
+
+
 def classify_error(e: Exception) -> Exception | None:
     """Map a non-retryable API error to a domain error, or None to re-raise as-is."""
     msg = (getattr(e, "message", None) or str(e)).lower()
@@ -168,6 +178,7 @@ class GeminiExtractor:
         sleep: Callable[[float], None] = time.sleep,
     ):
         self.model = model
+        self.fallbacks = fallback_models(model)
         self.low_res = low_res
         self._client = client
         self.max_retries = max_retries
@@ -282,6 +293,11 @@ class GeminiExtractor:
                 code = getattr(e, "code", None)
                 quota = daily_quota_error(e)
                 if quota is not None:
+                    if self.fallbacks:
+                        nxt = self.fallbacks.pop(0)
+                        log.warning("daily quota spent on %s; continuing on %s", self.model, nxt)
+                        self.model, attempt = nxt, 0
+                        continue
                     raise quota from e
                 if code in HEAVY_CODES:
                     raise TooLong(f"server deadline exceeded (HTTP {code}): {e}") from e

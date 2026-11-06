@@ -104,8 +104,22 @@ def test_agentic_falls_back_to_schema_in_prompt(sample):
     assert res.usage.total_tokens == 82000  # failed attempt's usage is kept
 
 
+def _overloaded():
+    no_usage = NS(total_input_tokens=0, total_output_tokens=0, total_thought_tokens=0, total_tokens=0)
+    return NS(id="int_1", status="failed", output_text=None, usage=no_usage, model="m", steps=[], errors=[NS(message="problem")])
+
+
+def test_fast_failure_hands_over_without_retry_by_default(monkeypatch):
+    monkeypatch.delenv("YTA_OVERLOAD_RETRIES", raising=False)
+    client = NS(interactions=FakeInteractions([_overloaded()] * 5))
+    ex = AgenticExtractor(model="m", client=client, poll_s=0, sleep=lambda s: None, processing="static")
+    with pytest.raises(ExtractionFailed):
+        ex.extract(URL)
+    assert len(client.interactions.created) == 1  # no resubmission, no second variant
+
+
 def test_fast_failure_is_retried_after_a_wait(sample, monkeypatch):
-    # Seen during Gemini "high demand": the job fails within seconds with nothing produced.
+    monkeypatch.setenv("YTA_OVERLOAD_RETRIES", "2")
     no_usage = NS(total_input_tokens=0, total_output_tokens=0, total_thought_tokens=0, total_tokens=0)
     overloaded = NS(id="int_1", status="failed", output_text=None, usage=no_usage, model="m", steps=[], errors=[NS(message="problem")])
     sleeps = []
@@ -150,13 +164,22 @@ def test_agentic_private_video_is_unavailable():
         ex.extract(URL)
 
 
-def test_agentic_daily_quota_fails_fast():
+def test_agentic_daily_quota_fails_fast(monkeypatch):
     from youtube_analyzer.gemini import QuotaExhausted
+
+    monkeypatch.setenv("YTA_MODEL_FALLBACKS", "")
 
     ex, client = _ex([], create_errors=[_HTTPErr(429, "Quota exceeded: GenerateRequestsPerDayPerProjectPerModel-FreeTier")] * 3)
     with pytest.raises(QuotaExhausted, match="daily quota exhausted"):
         ex.extract(URL)
     assert len(client.interactions.created) == 1
+
+
+def test_agentic_daily_quota_switches_model(sample, monkeypatch):
+    monkeypatch.setenv("YTA_MODEL_FALLBACKS", "gemini-b")
+    ex, client = _ex([_interaction("completed", json.dumps(sample))], create_errors=[_HTTPErr(429, "GenerateRequestsPerDayPerProjectPerModel-FreeTier")])
+    ex.extract(URL)
+    assert [k["model"] for k in client.interactions.created] == ["gemini-3.8-flash", "gemini-b"]
 
 
 def test_agentic_other_client_error_is_extraction_failed():
