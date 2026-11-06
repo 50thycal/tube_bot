@@ -1,0 +1,1443 @@
+{
+  "summary": "[00:00:00–00:07:00] In this video clip, Brendan presents a backtested ranking of trading styles from worst to best based on 16 years of high-frequency and daily market data across two core strategy families (Donchian breakout and Bollinger fade) while factoring in real-world execution costs. After introducing his methodology and cost model, he details ranks #9 (Scalping, 1-minute timeframe), #8 (Fast Day Trading, 5-minute timeframe), and #7 (Day Trading, 15-minute timeframe), demonstrating how transaction fees and slippage heavily erode or eliminate profitability on faster timeframes.\n\n[00:07:00–00:14:00] In this clip (00:07:00 to 00:14:00), the video concludes its ranking of trading and investing styles from rank 6 down to rank 1 based on a 16-year backtest (2008–2024/2026). It evaluates Hourly trading (#6), Premium Selling (#5), Position Trading (#4), Swing Trading (#3), SPY Buy & Hold (#2), and QQQ Buy & Hold (#1). The analysis demonstrates that higher timeframes consistently outperform lower timeframes across all tested market regimes due to lower trade frequency and reduced cost drag, while distinguishing between growth and income objectives.\n\n[00:14:00–00:15:03] This clip presents a structured, multi-layer prompt framework (trading_styles_lab) designed for Claude or Claude Code to build a quantitative trading research environment. The framework evaluates trading frequency, cost degradation, tax impact, and strategy robustness across two distinct signal families—a Donchian channel breakout (trend) and a Bollinger Band fade (mean reversion)—over six timeframes ranging from 1-minute intraday to daily holding periods.",
+  "segments": [
+    {
+      "start_ts": "00:00:00",
+      "end_ts": "00:01:00",
+      "topic": "Introduction and Study Overview",
+      "key_points": [
+        "Brendan uses Claude to structure a backtesting engine ranking trading styles from worst to best.",
+        "Styles covered include scalping, day trading, swing trading, option selling, and buy-and-hold.",
+        "The test incorporates 16 years of 1-minute futures data (MNQ, MES) and daily data for SPY and QQQ.",
+        "Simulations cover over 100,000 trades including commissions, slippage, and Section 1256 taxes.",
+        "Brendan studied math and economics at UCLA, spent 3 years in investment banking, and 2 years building client trading systems managing millions."
+      ]
+    },
+    {
+      "start_ts": "00:01:00",
+      "end_ts": "00:02:41",
+      "topic": "Methodology, Strategy Families, and Cost Model",
+      "key_points": [
+        "The study keeps strategy rules and costs identical across six execution speeds (1 min, 5 min, 15 min, 60 min, daily 33-day hold, daily 63-day hold).",
+        "Two strategy families tested: Donchian breakout (trend: buy 20-bar high, exit 10-bar low) and Bollinger fade (mean reversion: buy below 2-SD lower band, exit at 20-bar mean).",
+        "Cost model parameters: E-mini commission $4.00 round turn, Micro commission $1.20 round turn, 1 tick entry slippage, 1 tick exit slippage, $0.00 ETF commission, 1 bp SPY/QQQ spread, Section 1256 futures tax (60% LT / 40% ST).",
+        "Total round-turn break-even cost is $11.00 on Micro Nasdaq futures (MNQ) and $10.00 on ETF positions.",
+        "Results reflect the performance of an average trader following systematic rules rather than top discretionary traders."
+      ]
+    },
+    {
+      "start_ts": "00:02:41",
+      "end_ts": "00:04:35",
+      "topic": "Rank #9: Scalping (1-Minute Timeframe)",
+      "key_points": [
+        "Scalping takes ~10 trades per day with an average hold time of 14 minutes (1,838 trades/year).",
+        "Mean reversion on MNQ 1-minute chart yields a positive gross Sharpe ratio of +0.575.",
+        "After costs, net Sharpe drops to -2.865 with an annual net return of -15.9%.",
+        "Execution costs represent 5.98x the entire gross P&L.",
+        "A $100,000 account starting in 2010 hits zero equity on August 15, 2013, reaching -$178,052 by 2026.",
+        "Annual transaction friction costs $20,218 per year on scalping versus $61 per year on swing trading.",
+        "Scalping only suits institutional accounts with exchange fee rebates and dedicated infrastructure."
+      ]
+    },
+    {
+      "start_ts": "00:04:35",
+      "end_ts": "00:05:39",
+      "topic": "Rank #8: Fast Day Trading (5-Minute Timeframe)",
+      "key_points": [
+        "Fast day trading takes 2 trades per day with an average hold time of 70 minutes (504 trades/year).",
+        "The 5-minute mean reversion model produces a gross Sharpe ratio of +0.242, but net Sharpe is -0.613 with a net annual return of -3.0%.",
+        "Transaction costs consume 3.55x the gross P&L.",
+        "Suits traders with large account sizes where average trade size outweighs round-trip fixed costs, or prop firm capital."
+      ]
+    },
+    {
+      "start_ts": "00:05:39",
+      "end_ts": "00:07:00",
+      "topic": "Rank #7: Day Trading (15-Minute Timeframe)",
+      "key_points": [
+        "Patient day trading takes 1 trade per day on 15-minute bars with an average hold time of 3 hours (208 trades/year).",
+        "Achieves a positive net Sharpe ratio of +0.141 and a net annual return of +2.0% (gross Sharpe +0.483).",
+        "Costs eat 0.71x (71%) of total gross P&L.",
+        "To make 1-minute scalping profitable through discretionary filtering, a trader would need to accurately skip 1,579 losing trades out of 42,914 1-minute setup points, compared to skipping just 2 losing trades over 16 years in swing trading."
+      ]
+    },
+    {
+      "start_ts": "00:07:00",
+      "end_ts": "00:07:56",
+      "topic": "Rank 6: Hourly Trading",
+      "key_points": [
+        "Hourly trading uses a 60-minute Donchian channel breakout strategy on Micro E-mini Nasdaq futures (MNQ).",
+        "Positions are allowed to be held overnight across session breaks, averaging about 1 day per hold (~132 trades/year).",
+        "Achieved a Net Sharpe of +0.628, 6.0% annual net return, cost/gross P&L ratio of 0.23x, and max drawdown of -13%.",
+        "Trading 40% less frequently than the 15-minute timeframe allows retaining roughly 75% of the total edge after transaction costs."
+      ]
+    },
+    {
+      "start_ts": "00:07:56",
+      "end_ts": "00:09:03",
+      "topic": "Rank 5: Premium Selling",
+      "key_points": [
+        "Options premium selling involves selling options to collect income by taking on downside market risk (benchmarked against CBOE PUT index).",
+        "Achieved a Net Sharpe of +0.685 and 9.2% annual return over 16 years, but experienced a -29% drawdown during the 2020 crash.",
+        "While it lagged SPY buy & hold over the full 16-year period, premium selling outperformed SPY in 9 out of 20 tested sub-periods.",
+        "Suits large accounts seeking steady cash flow rather than capital growth, provided they can handle occasional steep drawdowns."
+      ]
+    },
+    {
+      "start_ts": "00:09:03",
+      "end_ts": "00:09:48",
+      "topic": "Rank 4: Position Trading",
+      "key_points": [
+        "Position trading uses a 55-bar Donchian channel breakout on daily QQQ candles (QQQ/D55 [donc]).",
+        "Averages ~3 trades per year with an average hold time of 63 days per trade.",
+        "Generated a Net Sharpe of +0.714 and 9.2% annual net return with a cost/gross ratio of 0.00x and max drawdown of -12%.",
+        "Suits full-time workers and small account sizes willing to sit through long stretches of inactivity."
+      ]
+    },
+    {
+      "start_ts": "00:09:48",
+      "end_ts": "00:10:47",
+      "topic": "Rank 3: Swing Trading",
+      "key_points": [
+        "Swing trading utilizes a 20-bar Donchian channel breakout on daily SPY candles (SPY/D20 [donc]).",
+        "Averages ~6 trades per year with an average hold time of 33 days.",
+        "Achieved a Net Sharpe of +0.797, 8.0% annual net return, cost/gross ratio of 0.01x, and a maximum drawdown of just -7%.",
+        "Recorded the lowest max drawdown of any active trading strategy in the study, making it ideal for most active traders with full-time jobs."
+      ]
+    },
+    {
+      "start_ts": "00:10:47",
+      "end_ts": "00:11:43",
+      "topic": "Rank 2: SPY Buy & Hold",
+      "key_points": [
+        "SPY Buy & Hold requires zero trades/year and no screen time.",
+        "Achieved a Net Sharpe of +0.848 and 15.5% annual return, growing $100,000 into $951,061 over 16 years.",
+        "Max drawdown reached -34%.",
+        "Serves as the core benchmark for long-term capital growth, but does not provide steady income unless assets are liquidated."
+      ]
+    },
+    {
+      "start_ts": "00:11:43",
+      "end_ts": "00:12:03",
+      "topic": "Rank 1: QQQ Buy & Hold",
+      "key_points": [
+        "QQQ Buy & Hold took top overall rank with a Net Sharpe of +0.938 and 20.4% annual return.",
+        "Grew $100,000 into $1,873,048 over the 16-year test period with zero trading costs.",
+        "Exhibited deeper drawdowns (-35%) than SPY, particularly during 2022."
+      ]
+    },
+    {
+      "start_ts": "00:12:03",
+      "end_ts": "00:13:22",
+      "topic": "Rank Stability & Timeframe Consistency",
+      "key_points": [
+        "Evaluated all strategy rankings across 20 sub-periods (17 calendar years plus 3 market regimes: bull, chop, down).",
+        "Slowing down trade frequency yielded superior net performance at every single step: Daily > 60m > 15m > 5m > 1m.",
+        "1-minute and 5-minute timeframes finished at the bottom in every market condition tested due to transaction costs.",
+        "High trade frequency intraday trading provides a high performance ceiling for skilled discretionary traders, but performs worst on average for rule-based systems."
+      ]
+    },
+    {
+      "start_ts": "00:13:22",
+      "end_ts": "00:14:00",
+      "topic": "Two Objectives: Growth vs. Income",
+      "key_points": [
+        "Growth objective benchmark is buy-and-hold (SPY/QQQ); active strategies must beat this benchmark to justify the effort.",
+        "Income objective requires active trading, but reducing trade frequency (swing/hourly trading) is not the same as avoiding trading.",
+        "Higher timeframe active trading provides income generation while avoiding the severe cost drag of ultra-fast day trading."
+      ]
+    },
+    {
+      "start_ts": "00:14:00",
+      "end_ts": "00:14:07",
+      "topic": "Growth vs Income Objectives",
+      "key_points": [
+        "Reducing trading frequency is not the same as not trading.",
+        "Trading lower frequency allows traders to generate income and take setups while taking on less risk than daily intraday trading."
+      ]
+    },
+    {
+      "start_ts": "00:14:07",
+      "end_ts": "00:14:32",
+      "topic": "Prompting Layer 1: Data and Costs",
+      "key_points": [
+        "Layer 1 of trading_styles_lab focuses exclusively on data ingestion and cost modeling, avoiding trading engine code at this stage.",
+        "1-minute Parquet datasets for SPY, QQQ, GLD, TLT, IWM, and VXX are ingested and categorized into unadjusted front month, back-adjusted, and roll calendar formats.",
+        "Daily history is fetched via yfinance with auto-adjust ON for total return, along with price-only SPY to serve as the benchmark equity (yielding ~1.5% to 2% dividend return).",
+        "Risk-free rate is pulled from FRED (DTB3), and options benchmarks use CBOE PUT and BXM published index history.",
+        "Cost specifications include $4.00 RT per futures contract ($1.25 RT micros), 1 tick slippage on entry and exit, 10 bps execution penalty, 50c commission + 15 bps spread RT on ETF/QQQ, and 50 bps per year short borrow rate.",
+        "Taxes are configured at 40% short-term / 20% long-term for futures (60/40 rule) and 37% short-term / 20% long-term for ETFs."
+      ]
+    },
+    {
+      "start_ts": "00:14:32",
+      "end_ts": "00:14:37",
+      "topic": "Prompting Layer 2: The Signal Engine",
+      "key_points": [
+        "Layer 2 tests a single signal family across six speeds/horizons: 1-minute, 5-minute, 15-minute, 1-hour intraday (flat by close), daily short lookback (swing), and daily long lookback (position).",
+        "The signal engine uses a Donchian channel breakout (enter long on N-bar high break, exit on M-bar low break or session close).",
+        "Parameters must not be optimized; standard settings (e.g. 20-period entry, 10-period exit) are held constant to isolate frequency degradation.",
+        "Trade frequencies must be measured from the actual execution output rather than hardcoded."
+      ]
+    },
+    {
+      "start_ts": "00:14:37",
+      "end_ts": "00:14:53",
+      "topic": "Prompting Layer 3: Mean Reversion and Stability",
+      "key_points": [
+        "Layer 3 introduces a second signal family: Bollinger Band fade mean reversion (enter long when price closes below lower band, exit when price closes above moving average; default 20-period, 2.0 std dev).",
+        "Mean reversion is evaluated at identical horizons to test if cost degradation is signal-dependent or universal.",
+        "Sub-period window stability testing splits data into non-overlapping periods and regime buckets (bull, chop, drawdown) derived from SPY.",
+        "Cost sensitivity re-runs rankings at 0.5, 1.0, and 1.5 ticks of entry slippage."
+      ]
+    },
+    {
+      "start_ts": "00:14:53",
+      "end_ts": "00:15:03",
+      "topic": "Outro and Community Call to Action",
+      "key_points": [
+        "Encourages viewers to like, comment, and subscribe.",
+        "Invites viewers to join the AI-focused trading community on Skool via the description link."
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "ts": "00:03:02",
+      "claim": "1-minute scalping has a positive gross edge (+0.575 gross Sharpe) but loses -15.9% annually after trading costs.",
+      "evidence_shown": "backtest",
+      "caveats": "Applies to retail cost structures; institutional traders receive fee rebates."
+    },
+    {
+      "ts": "00:03:43",
+      "claim": "Transaction costs for 1-minute scalping consume 5.98x the gross strategy P&L, costing $20,218 per year on a $100,000 account.",
+      "evidence_shown": "backtest",
+      "caveats": "Based on $1.20 round-turn micro commission and 1 tick slippage on entry and exit."
+    },
+    {
+      "ts": "00:04:46",
+      "claim": "5-minute fast day trading loses -3.0% annually after costs, with costs eating 3.55x gross profit.",
+      "evidence_shown": "backtest",
+      "caveats": "Evaluated on systematic rules without discretionary setup filtering."
+    },
+    {
+      "ts": "00:05:58",
+      "claim": "15-minute day trading achieves a positive net Sharpe of +0.141 and +2.0% annual net return.",
+      "evidence_shown": "backtest",
+      "caveats": "Transaction costs still consume 71% of total gross P&L."
+    },
+    {
+      "ts": "00:07:27",
+      "claim": "Moving from a 15-minute to a 60-minute chart reduces trading frequency by ~40% while preserving ~75% of the gross trading edge.",
+      "evidence_shown": "data",
+      "caveats": "Based on backtesting data on MNQ futures from 2008 to 2024/2026."
+    },
+    {
+      "ts": "00:08:26",
+      "claim": "Options premium selling underperforms SPY buy and hold on absolute return over 16 years, but beats SPY in 9 of 20 tested sub-periods.",
+      "evidence_shown": "data",
+      "caveats": "Exposes traders to rare but deep tail-risk drawdowns (-29% in 2020)."
+    },
+    {
+      "ts": "00:10:08",
+      "claim": "Daily 20-bar Donchian swing trading on SPY achieved the lowest maximum drawdown (-7%) among all active trading strategies in the 16-year study.",
+      "evidence_shown": "data",
+      "caveats": "Generates lower annualized return (8.0%) compared to passive index buy and hold."
+    },
+    {
+      "ts": "00:12:22",
+      "claim": "Higher trading timeframes (Daily > 60m > 15m > 5m > 1m) consistently beat lower timeframes across every tested calendar year and market regime.",
+      "evidence_shown": "data",
+      "caveats": "Applies strictly to mechanical/rule-based systems; top discretionary traders may achieve higher performance on lower timeframes."
+    },
+    {
+      "ts": "00:14:01",
+      "claim": "Reducing trade frequency allows traders to capture income while taking on significantly less risk than daily intraday trading.",
+      "evidence_shown": "none",
+      "caveats": "Requires taking high-conviction setups fewer times per year."
+    },
+    {
+      "ts": "00:14:14",
+      "claim": "The prompt framework can be executed inside Claude or using Claude Code for advanced usage.",
+      "evidence_shown": "anecdote",
+      "caveats": ""
+    },
+    {
+      "ts": "00:14:38",
+      "claim": "Trend breakout strategies naturally improve in performance as holding periods lengthen.",
+      "evidence_shown": "none",
+      "caveats": ""
+    }
+  ],
+  "visuals": [
+    {
+      "ts": "00:00:05",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "Day Trading",
+        "Swing",
+        "Momentum",
+        "Selling Options",
+        "Buy & Hold"
+      ],
+      "what_it_argues": "Previews trading style categories evaluated in the video.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:00:11",
+      "type": "screen",
+      "title": "Good evening, AI Pathways",
+      "axes_or_columns": [],
+      "values_readable": [
+        "What is the best trading style?",
+        "Opus 3.5 Medium Auto"
+      ],
+      "what_it_argues": "Shows the Claude interface used to structure the backtest evaluation.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:00:22",
+      "type": "screen",
+      "title": "16 yrs 1-MINUTE + DAILY",
+      "axes_or_columns": [],
+      "values_readable": [
+        "ES",
+        "NQ",
+        "SPY",
+        "QQQ"
+      ],
+      "what_it_argues": "Displays the 16-year dataset assets used for backtesting.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:00:26",
+      "type": "diagram",
+      "title": "2 STRATEGY FAMILIES",
+      "axes_or_columns": [],
+      "values_readable": [
+        "Trend",
+        "Revert"
+      ],
+      "what_it_argues": "Shows the two strategy archetypes: trend following and mean reversion.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:00:32",
+      "type": "chart",
+      "title": "Costs ON EVERY TRADE",
+      "axes_or_columns": [
+        "Gross",
+        "Fees",
+        "Slippage",
+        "Tax",
+        "Net"
+      ],
+      "values_readable": [
+        "Gross",
+        "Fees",
+        "Slippage",
+        "Tax",
+        "Net"
+      ],
+      "what_it_argues": "Shows how transaction friction components reduce gross trade returns to net profits.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:00:35",
+      "type": "screen",
+      "title": "95,194 SIMULATED TRADES",
+      "axes_or_columns": [],
+      "values_readable": [
+        "58,123 SIMULATED TRADES",
+        "95,194 SIMULATED TRADES"
+      ],
+      "what_it_argues": "Demonstrates backtest scale across tens of thousands of simulated executions.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:00:50",
+      "type": "slide",
+      "title": "Disclaimer:",
+      "axes_or_columns": [],
+      "values_readable": [
+        "NO FINANCIAL ADVICE - The Information on this Channel is provided for education and informational purposes only..."
+      ],
+      "what_it_argues": "Standard financial disclaimer.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:01:00",
+      "type": "slide",
+      "title": "Six speeds",
+      "axes_or_columns": [],
+      "values_readable": [
+        "1 min, hold 14 min, 2,568 trades / yr",
+        "5 min, hold 70 min, 504 trades / yr",
+        "15 min, hold 3 hrs, 208 trades / yr",
+        "60 min, hold 1 day, 132 trades / yr",
+        "Daily, hold 33 days, 6 trades / yr",
+        "Daily, hold 63 days, 2 trades / yr"
+      ],
+      "what_it_argues": "Outlines the six trade timeframes and holding periods evaluated.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:01:23",
+      "type": "diagram",
+      "title": "The two families",
+      "axes_or_columns": [],
+      "values_readable": [
+        "Donchian breakout",
+        "buy on a break of the 20-bar high, exit on a break of the 10-bar low",
+        "entry 3523.38",
+        "20-bar high",
+        "10-bar low",
+        "Bollinger fade",
+        "buy below the 2-SD lower band, exit above the mean",
+        "entry 3542.88",
+        "20-bar mean",
+        "lower band"
+      ],
+      "what_it_argues": "Defines rules for Donchian breakout and Bollinger fade strategies.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:01:51",
+      "type": "chart",
+      "title": "The cost model",
+      "axes_or_columns": [
+        "Symbol",
+        "Dollar Cost"
+      ],
+      "values_readable": [
+        "MES: $22.20",
+        "MNQ: $11.00",
+        "SPY: $10.00",
+        "QQQ: $10.00",
+        "E-mini commission, round turn: $4.00",
+        "Micro commission, round turn: $1.20",
+        "Entry slippage: 1 tick",
+        "Exit slippage: 1 tick",
+        "ETF commission: $0.00",
+        "SPY / QQQ spread: 1 bp round trip",
+        "Market impact: 0 bp",
+        "Futures tax, Section 1256: 60% LT / 40% ST",
+        "Short-term rate: UNREADABLE",
+        "Long-term rate: UNREADABLE",
+        "Blended 1256 rate: UNREADABLE"
+      ],
+      "what_it_argues": "Breaks down fixed commissions, slippage, and tax assumptions applied to each asset class.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:02:52",
+      "type": "diagram",
+      "title": "Scalping",
+      "axes_or_columns": [],
+      "values_readable": [
+        "in and out, over and over",
+        "HOLD: 14 min",
+        "TRADES: 10 a day",
+        "OVERNIGHT: never"
+      ],
+      "what_it_argues": "Defines scalping execution parameters.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:03:02",
+      "type": "chart",
+      "title": "#9 Scalping",
+      "axes_or_columns": [
+        "Year (2012 to 2026)",
+        "Equity ($k)"
+      ],
+      "values_readable": [
+        "MNQ/1m [boll] 1-minute",
+        "net Sharpe: -2.865",
+        "net return / yr: -15.9%",
+        "trades / yr: 1,838",
+        "cost ÷ gross P&L: 5.98x",
+        "gross vs net Sharpe: gross +0.575, net -2.865",
+        "zero: 2013-08-15",
+        "-$178,052",
+        "$100k",
+        "-100%"
+      ],
+      "what_it_argues": "Presents equity curve showing how high transaction costs turn 1-minute scalping into severe cumulative losses.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:03:58",
+      "type": "chart",
+      "title": "Cost per year",
+      "axes_or_columns": [
+        "Style",
+        "Cost ($)"
+      ],
+      "values_readable": [
+        "scalping - 1,838 round turns: $20,218",
+        "swing - 6 round turns: $61",
+        "$11.00 to break even on one micro Nasdaq round turn",
+        "$10.00 on an ETF round turn"
+      ],
+      "what_it_argues": "Compares total annual friction costs of scalping vs swing trading on a $100k account.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:04:13",
+      "type": "table",
+      "title": "Who each style suits",
+      "axes_or_columns": [
+        "rank",
+        "style",
+        "account size",
+        "screen time",
+        "suits"
+      ],
+      "values_readable": [
+        "9 | scalping | institutional | whole session | cost structure, not setups",
+        "8 | fast day trading | large | whole session | trade size vs round trip",
+        "7 | day trading | large | whole session | one decision a day",
+        "6 | hourly | any | most of session | willing to hold overnight",
+        "5 | premium selling | large | none | cash flow, tolerant of one hole",
+        "4 | position trading | any | once a day | long stretches of nothing",
+        "3 | swing trading | any | once a day | full-time job, small account",
+        "2 | SPY buy and hold | any | none | growth, not income",
+        "1 | QQQ buy and hold | any | none | growth, not income"
+      ],
+      "what_it_argues": "Summary matrix matching each trading style to optimal account size, required screen time, and trade-off suitability.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:04:39",
+      "type": "diagram",
+      "title": "Fast day trading",
+      "axes_or_columns": [],
+      "values_readable": [
+        "a few setups, flat by the close",
+        "HOLD: 70 min",
+        "TRADES: 2 a day",
+        "OVERNIGHT: never"
+      ],
+      "what_it_argues": "Defines 5-minute fast day trading parameters.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:04:46",
+      "type": "chart",
+      "title": "#8 Fast day trading",
+      "axes_or_columns": [
+        "Year (2012 to 2026)",
+        "Equity ($k)"
+      ],
+      "values_readable": [
+        "MNQ/5m [donc] 5-minute",
+        "net Sharpe: -0.613",
+        "net return / yr: -3.0%",
+        "trades / yr: 504",
+        "cost ÷ gross P&L: 3.55x",
+        "gross vs net Sharpe: gross +0.242, net -0.613"
+      ],
+      "what_it_argues": "Shows equity curve for 5-minute fast day trading losing 3% annually due to friction.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:05:43",
+      "type": "diagram",
+      "title": "Day trading",
+      "axes_or_columns": [],
+      "values_readable": [
+        "wait for one setup",
+        "HOLD: 3 hours",
+        "TRADES: 1 a day",
+        "OVERNIGHT: never"
+      ],
+      "what_it_argues": "Defines patient 15-minute day trading parameters.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:05:57",
+      "type": "chart",
+      "title": "#7 Day trading",
+      "axes_or_columns": [
+        "Year (2012 to 2026)",
+        "Equity ($k)"
+      ],
+      "values_readable": [
+        "MNQ/15m [donc] 15-minute",
+        "net Sharpe: +0.141",
+        "net return / yr: 2.0%",
+        "trades / yr: 208",
+        "cost ÷ gross P&L: 0.71x",
+        "gross vs net Sharpe: gross +0.483, net +0.141",
+        "$116,629"
+      ],
+      "what_it_argues": "Shows 15-minute day trading producing a positive net equity curve.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:06:11",
+      "type": "diagram",
+      "title": "Skipping losing trades",
+      "axes_or_columns": [],
+      "values_readable": [
+        "2 trades - swing - over sixteen years",
+        "1,579 trades - scalping - picked in advance",
+        "Each dot is a one minute trade. The dark ones are the 5 percent that would need to be identified in advance, out of 42,914."
+      ],
+      "what_it_argues": "Illustrates the heavy burden placed on human discretionary judgment as trade frequency increases.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:07:00",
+      "type": "table",
+      "title": "Who each style suits",
+      "axes_or_columns": [
+        "style",
+        "account size",
+        "screen time",
+        "suits"
+      ],
+      "values_readable": [
+        "9 scalping | institutional | whole session | cost structure, not setups",
+        "8 fast day trading | large | whole session | trade size vs round trip",
+        "7 day trading | large | whole session | one decision a day",
+        "6 hourly | any | most of session | willing to hold overnight",
+        "5 premium selling | large | none | cash flow, tolerant of one hole",
+        "4 position trading | any | once a day | long stretches of nothing",
+        "3 swing trading | any | once a day | full-time job, small account",
+        "2 SPY buy and hold | any | none | growth, not income",
+        "1 QQQ buy and hold | any | none | growth, deeper drawdown"
+      ],
+      "what_it_argues": "Summarizes the suitability of each trading style by account size, screen time required, and target trader profile.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:07:21",
+      "type": "chart",
+      "title": "THE COUNTDOWN #6 Hourly",
+      "axes_or_columns": [
+        "Year (2012 to 2026)",
+        "Equity ($100k to $197,701)",
+        "Drawdown (-13%)"
+      ],
+      "values_readable": [
+        "MNQ/60m [donc] - 60-minute",
+        "net Sharpe: +0.628",
+        "net return / yr: 6.0%",
+        "trades / yr: 132",
+        "cost ÷ gross P&L: 0.23x",
+        "gross Sharpe: +0.822",
+        "net Sharpe: +0.628",
+        "Ending equity: $197,701",
+        "Max drawdown: -13%"
+      ],
+      "what_it_argues": "Presents backtest performance for 60-minute Donchian breakout trading on MNQ.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:08:16",
+      "type": "chart",
+      "title": "THE COUNTDOWN #5 Premium selling",
+      "axes_or_columns": [
+        "Year (2012 to 2026)",
+        "Equity ($100k to $391,805)",
+        "Drawdown (-29%)"
+      ],
+      "values_readable": [
+        "CBOE PUT - published index",
+        "net Sharpe: +0.685",
+        "net return / yr: 9.2%",
+        "trades / yr: 0.00",
+        "cost ÷ gross P&L: 0.00x",
+        "Ending equity: $391,805",
+        "Max drawdown: -29%"
+      ],
+      "what_it_argues": "Displays long-term equity growth and drawdown curve for options premium selling benchmarked by CBOE PUT index.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:09:18",
+      "type": "chart",
+      "title": "THE COUNTDOWN #4 Position trading",
+      "axes_or_columns": [
+        "Year (2012 to 2026)",
+        "Equity ($100k to $240,210)",
+        "Drawdown (-12%)"
+      ],
+      "values_readable": [
+        "QQQ/D55 [donc] - daily 55-bar",
+        "net Sharpe: +0.714",
+        "net return / yr: 9.2%",
+        "trades / yr: 3",
+        "cost ÷ gross P&L: 0.00x",
+        "gross Sharpe: +0.717",
+        "net Sharpe: +0.714",
+        "Ending equity: $240,210",
+        "Max drawdown: -12%"
+      ],
+      "what_it_argues": "Presents backtest metrics for 55-bar daily Donchian breakout position trading on QQQ.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:10:03",
+      "type": "chart",
+      "title": "THE COUNTDOWN #3 Swing trading",
+      "axes_or_columns": [
+        "Year (2012 to 2026)",
+        "Equity ($100k to $222,425)",
+        "Drawdown (-7%)"
+      ],
+      "values_readable": [
+        "SPY/D20 [donc] - daily 20-bar",
+        "net Sharpe: +0.797",
+        "net return / yr: 8.0%",
+        "trades / yr: 6",
+        "cost ÷ gross P&L: 0.01x",
+        "gross Sharpe: +0.805",
+        "net Sharpe: +0.797",
+        "Ending equity: $222,425",
+        "Max drawdown: -7%"
+      ],
+      "what_it_argues": "Demonstrates backtest results for daily 20-bar Donchian breakout swing trading on SPY showing minimal drawdown.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:10:50",
+      "type": "chart",
+      "title": "THE COUNTDOWN #2 SPY buy and hold",
+      "axes_or_columns": [
+        "Year (2012 to 2026)",
+        "Equity ($100k to $951,061)",
+        "Drawdown (-34%)"
+      ],
+      "values_readable": [
+        "SPY B&H - buy and hold",
+        "net Sharpe: +0.848",
+        "net return / yr: 15.5%",
+        "trades / yr: 0.00",
+        "cost ÷ gross P&L: 0.00x",
+        "Ending equity: $951,061",
+        "Max drawdown: -34%"
+      ],
+      "what_it_argues": "Shows 16-year performance of passive SPY buy and hold.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:11:48",
+      "type": "chart",
+      "title": "THE COUNTDOWN #1 QQQ buy and hold",
+      "axes_or_columns": [
+        "Year (2012 to 2026)",
+        "Equity ($100k to $1,873,048)",
+        "Drawdown (-35%)"
+      ],
+      "values_readable": [
+        "QQQ B&H - buy and hold",
+        "net Sharpe: +0.938",
+        "net return / yr: 20.4%",
+        "trades / yr: 0.00",
+        "cost ÷ gross P&L: 0.00x",
+        "Ending equity: $1,873,048",
+        "Max drawdown: -35%"
+      ],
+      "what_it_argues": "Shows top-ranked 16-year backtest performance for passive QQQ buy and hold.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:12:03",
+      "type": "chart",
+      "title": "Rank stability",
+      "axes_or_columns": [
+        "Sub-period / Regime (2012 to 2026, bull, chop, down)",
+        "Rank (#1 to #18)"
+      ],
+      "values_readable": [
+        "MNQ/60m [donc]",
+        "MNQ/15m [donc]",
+        "QQQ B&H",
+        "SPY B&H",
+        "CBOE PUT",
+        "MNQ/5m [donc]",
+        "MNQ/1m [boll]"
+      ],
+      "what_it_argues": "Illustrates that timeframe rankings remain stable across 20 distinct sub-periods and market regimes, with daily/60m timeframes consistently beating 1m/5m.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:13:22",
+      "type": "slide",
+      "title": "TWO OBJECTIVES Growth and income",
+      "axes_or_columns": [],
+      "values_readable": [
+        "growth: holding is the benchmark, the rest have to clear",
+        "income: still trading, fewer times a year",
+        "Reducing frequency is not the same as not trading."
+      ],
+      "what_it_argues": "Frames trading styles based on whether the trader's goal is capital growth (benchmark is buy-and-hold) or income (active trading with reduced frequency).",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:14:00",
+      "type": "slide",
+      "title": "Growth and income",
+      "axes_or_columns": [],
+      "values_readable": [
+        "TWO OBJECTIVES",
+        "Growth and income",
+        "growth",
+        "holding is the benchmark",
+        "the rest have to clear",
+        "income",
+        "still trading",
+        "fewer times a year",
+        "Reducing frequency is not the same as not trading."
+      ],
+      "what_it_argues": "Differentiates growth objectives from income trading objectives based on execution frequency and risk.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:14:07",
+      "type": "slide",
+      "title": "Data and costs",
+      "axes_or_columns": [],
+      "values_readable": [
+        "LAYER 1 | PART 1 OF 3",
+        "Data and costs",
+        "Build the foundation first",
+        "Build layer 1 of a new research project called trading_styles_lab. This layer is DATA AND COSTS ONLY. Do not build trading, backtest, or engine code yet.",
+        "GOAL: Context only, do not build it yet.",
+        "Compare different trading styles on a per dollar of capital at risk, after realistic costs and taxes. The rungs are scalping, fast day trading, day trading, hourly, premium selling, position trading, swing trading, and buy and hold. Later layers hold one strategy per rung on the same underlying asset and holding period, so this layer must provide data access and one shared cost model that every rung will use.",
+        "TASK 1: INSPECT THE PARQUET FILES IN THIS FOLDER",
+        "Inspect the parquet files in data/ to find files containing 1-minute data for SPY, QQQ, GLD, TLT, IWM, and VXX, converted to three forms: unadjusted front month, back-adjusted, and a roll calendar.",
+        "Find every parquet file and inspect each one. For each report: filename, size, row count, column schema with dtypes, first and last timestamp, and any missing ranges or gaps. Do not assume or guess based on the contents, not the filename, and say which file is which.",
+        "Then move them into data/futures, print the layout, and write a summary report. If anything is missing, note it. If anything is ambiguous, list it as an open question and keep going. Do not invent data, and do not download future data."
+      ],
+      "what_it_argues": "Specifies Layer 1 prompt rules for setting up dataset inspection and directory organization without writing trading logic.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:14:23",
+      "type": "slide",
+      "title": "Data and costs",
+      "axes_or_columns": [],
+      "values_readable": [
+        "LAYER 1 | PART 2 OF 3",
+        "Data and costs",
+        "TASK 2: FREE DAILY DATA",
+        "Pull daily history with yfinance, auto-adjust ON so prices are total-return. Also pull SPY price-only (auto-adjust OFF); buy and hold is the benchmark everything else is ranked against, and price-only gives an equity roughly 1.5 to 2 percent a year.",
+        "SPY, QQQ, TLT, IWM, VXX, GLD, DBC, VNQ, EFA, EEM, VNQI.",
+        "Use FRED DTB3 for the risk-free rate. Save these as parquet under data/daily/. Print first date, last date and row count for each, and flag any ticker starting after 2000.",
+        "TASK 3: PREMIUM SELLING BENCHMARK",
+        "Do not build an options backtest. Retrieve CBOE's published PUT and BXM index history. Report which source worked, the date range, and whether the history goes back far enough. If you can only get part history, describe how to interpolate.",
+        "TASK 4: THE COST MODEL",
+        "Build one module, costs.py, that every later rung imports. No rung may hardcode its own costs. Every number is a named constant in one config block at the top."
+      ],
+      "what_it_argues": "Details tasks for fetching free daily data, options benchmark indices, and creating a unified cost module costs.py.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:14:31",
+      "type": "slide",
+      "title": "Data and costs",
+      "axes_or_columns": [],
+      "values_readable": [
+        "LAYER 1 | PART 3 OF 3",
+        "Data and costs",
+        "continued",
+        "$4.00 round turn per contract, $1.25 round turn micros",
+        "1 tick slippage on entry, 1 tick on exit",
+        "10 bps round-trip execution penalty",
+        "50 commission, 15bp spread round trip on ETF/QQQ",
+        "Short borrow rate: 50 bps per year on long/short strategies",
+        "Taxes: 40% short-term, 20% long-term for futures (60/40 rule applies); 37% short-term on etf and under a year size, long-term default 37% short, 20% long, switchable",
+        "FUTURES RUNGS TRAIN MICRO CONTRACTS SIZED IN WHOLE CONTRACTS.",
+        "Micro contracts trade 1/10 size, allowing $100k to $1M even on 0-29 contracts and most backtests then charge 29% of a commission; charge full $1.25 micro RT.",
+        "Then write required_gross_edge(), which takes a style's trade frequency and target net return on capital and returns the gross per-trade edge needed to break even after all of the above. This is the spine of the whole study. Write a unit test for this with hand-checkable cases.",
+        "TASK 5: RUN AND VERIFY",
+        "Verify gaps, duplicate timestamps, timezone handling, trading-day alignment across assets. Write a single run_layer1.py report.hd covering what was loaded, what range each series spans, the risk-free rate history summary, and the cost structure table.",
+        "When layer 1 runs cleanly without errors, and all tests pass run the checks and the test output. Do not process past Layer 1."
+      ],
+      "what_it_argues": "Outlines explicit cost values, tax assumptions, micro futures contract sizing, and verification requirements.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:14:32",
+      "type": "slide",
+      "title": "The engine",
+      "axes_or_columns": [],
+      "values_readable": [
+        "LAYER 2 | PART 1 OF 2",
+        "The engine",
+        "one signal family, six speeds, measured frequency",
+        "Continue trading_styles_lab. Layer 1 is complete. This is Layer 2.",
+        "RULE OF THE LAB: One signal family across all rungs.",
+        "Every rung in the ranking must be measured over the IDENTICAL data and under the identical cost model. Rungs can vary in speed, but not signal parameters. Only the intraday data varies.",
+        "PRIMARY WINDOW: The first date your 1-minute data covers, through the last date all symbols share. State both dates explicitly.",
+        "DATA PANELS: 1-minute data is NOT used in the primary ranking. Build a separate robustness panel for the rungs that have more history, and run the 1-minute panel only as a secondary check.",
+        "THE SIGNAL ENGINE",
+        "Parameters are held constant and vary only the holding period.",
+        "SIGNAL: Donchian channel breakout. Enter long on a break of the N-bar high, exit on a break of the M-bar low, or at the session close for the intraday rungs. Long only.",
+        "CRITICAL: Do NOT optimize or search parameters. Pick one fixed set and run it. The goal is not to find a good strategy; it is to measure frequency degradation. If a strategy is eventual-ly monotonic at every horizon, the single point is that signal parameter optimization masks frequency loss. Standard parameters: e.g. 20-period entry, 10-period exit for daily, or for intraday 20/10 for the long daily rungs, because those are standard. Write down why each was chosen."
+      ],
+      "what_it_argues": "Defines Layer 2 signal rules, prohibiting parameter optimization to isolate trade frequency degradation.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:14:36",
+      "type": "slide",
+      "title": "The engine",
+      "axes_or_columns": [],
+      "values_readable": [
+        "LAYER 2 | PART 2 OF 2",
+        "The engine",
+        "continued",
+        "HORIZONS",
+        "1-minute intraday, flat by close",
+        "5-minute intraday, flat by close",
+        "15-minute intraday, flat by close",
+        "1-hour intraday, flat by close",
+        "daily short lookback (swing)",
+        "daily long lookback (position)",
+        "Intraday runs on Micro futures. Daily runs on both futures and ETFs. Note: futures vs ETF cost difference is visible at short horizons.",
+        "WHAT TO REPORT, per horizon, over the common window",
+        "MEASURED trades per year",
+        "AVERAGE holding period",
+        "gross return, gross Sharpe",
+        "net return and net Sharpe after costs from costs.py",
+        "after-tax net",
+        "required gross edge per trade to break even",
+        "percentage of gross profit consumed by costs",
+        "The trade frequencies MUST be MEASURED from the signal, not typed in as a target. The fact that high-frequency trading is an assumption dressed as a result. This is the single most important thing in Layer 2.",
+        "Also compute the passive benchmarks over the same window: SPY and QQQ buy and hold, and the CBOE index."
+      ],
+      "what_it_argues": "Specifies the six target time horizons and key performance metrics to be computed and reported.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:14:37",
+      "type": "slide",
+      "title": "The second family",
+      "axes_or_columns": [],
+      "values_readable": [
+        "LAYER 3 | PART 2 OF 4",
+        "The second family",
+        "Continuous trading_styles_lab. Layer 2 is accepted. This is Layer 3.",
+        "Three jobs: test a second signal family, fix the ranking metric, and test how stable the ranking is across time. Do not change costs.py or the data. Keep the exact same window where stated.",
+        "PART A: THE SECOND SIGNAL FAMILY",
+        "Layer 2 tested a TREND BREAKOUT, which is a trend-following rule, and trend rules are structurally expected to improve as the holding period lengthens. So the ladder may be measuring the signal family rather than the cost of speed. This is the steepest hole in the study and it has to be closed.",
+        "Add a MEAN REVERSION family and run it at the identical six horizons, under identical conditions, through the identical cost module.",
+        "RULE: Bollinger Band fade. Enter long when price closes below the lower band, exit when it closes back above the moving average. Default: 20-period, 2.0 standard deviations, scaled by bar count. Long only, flat by close intraday.",
+        "SAME CONSTRAINT AS LAYER 2: Do not optimize, search, or compare parameters. One fixed rule, standard values."
+      ],
+      "what_it_argues": "Introduces Bollinger Band fade (mean reversion) to determine if performance decay is signal-specific or universal.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:14:39",
+      "type": "slide",
+      "title": "The second family",
+      "axes_or_columns": [],
+      "values_readable": [
+        "LAYER 3 | PART 3 OF 4",
+        "The second family",
+        "continued",
+        "The question this answers: mean reversion is supposed to FAVOR fast trading. If the ladder is still monotonic under a family that should favor speed, the finding is about costs and not the rule. If the ladder breaks, say so plainly. A broken ladder is a more interesting result and I would rather know.",
+        "Report the two families side by side at every horizon and state explicitly whether the ordering is the same under both."
+      ],
+      "what_it_argues": "Explains why testing mean reversion at high frequencies isolates cost structure effects from signal mechanics.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:14:40",
+      "type": "slide",
+      "title": "The second family",
+      "axes_or_columns": [],
+      "values_readable": [
+        "LAYER 3 | PART 4 OF 4",
+        "The second family",
+        "continued",
+        "PART C: WINDOW STABILITY",
+        "Split the primary window into non-overlapping sub-periods. Use calendar years or regime buckets. Define regime buckets you derive from SPY's price: bull, chop, and drawdown. Define them by a stated rule, and write the rule down.",
+        "For every rung report its rank within each sub-period and compute a rank-stability measure across sub-periods.",
+        "Then the key output: which findings hold IN EVERY sub-period, which hold in most, and which are artifacts of the full-window average. Give me a plain list of claims sorted by how well they survive, because only the survivors are worth stating.",
+        "PART D: SENSITIVITY TO COSTS",
+        "Re-run the ranking at 0.5, 1.0, and 1.5 ticks of entry slippage and state plainly whether the order changes. That matters more than the default value itself.",
+        "SUMMARIZE: Take all these results, then tell me in plain language what the final ranking is, which claims I can state without qualification, and which I cannot."
+      ],
+      "what_it_argues": "Specifies regime bucket analysis, rank stability metrics, and slippage sensitivity testing for Layer 3.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:14:54",
+      "type": "screen",
+      "title": "THANKS FOR WATCHING",
+      "axes_or_columns": [],
+      "values_readable": [
+        "THANKS FOR WATCHING",
+        "DON'T FORGET TO LIKE, COMMENT, SHARE",
+        "SUBSCRIBE"
+      ],
+      "what_it_argues": "Closing end screen prompting user engagement.",
+      "confidence": "high"
+    }
+  ],
+  "formulas": [
+    {
+      "ts": "00:03:02",
+      "expression": "Cost Ratio = Total Friction / Gross PnL",
+      "variables": [
+        {
+          "symbol": "Cost Ratio",
+          "meaning": "Multiplier representing transaction friction relative to gross trading profits"
+        },
+        {
+          "symbol": "Total Friction",
+          "meaning": "Sum of round-turn commissions, entry/exit slippage, and taxes paid"
+        },
+        {
+          "symbol": "Gross PnL",
+          "meaning": "Raw profit generated by trading strategy before accounting for costs"
+        }
+      ]
+    }
+  ],
+  "strategies": [
+    {
+      "name": "Scalping (Bollinger Fade / Mean Reversion - 1-min)",
+      "ts": "00:02:41",
+      "logic": "Mean reversion strategy on 1-minute MNQ futures. Buys when price drops below lower Bollinger Band and sells when price returns to 20-bar average.",
+      "entry_rules": [
+        "Buy when price closes below the 20-bar, 2-standard-deviation lower Bollinger Band."
+      ],
+      "exit_rules": [
+        "Exit when price reaches the 20-bar mean or average holding time of 14 minutes is reached."
+      ],
+      "parameters": [
+        {
+          "name": "Timeframe",
+          "value": "1-minute"
+        },
+        {
+          "name": "Average Hold Time",
+          "value": "14 minutes"
+        },
+        {
+          "name": "Trade Frequency",
+          "value": "10 trades/day (1,838 trades/year)"
+        },
+        {
+          "name": "Bollinger Period",
+          "value": "20 bars"
+        },
+        {
+          "name": "Bollinger StdDev",
+          "value": "2.0"
+        }
+      ],
+      "markets_assets": [
+        "MNQ (Micro E-mini Nasdaq-100 futures)"
+      ],
+      "stated_performance": "Gross Sharpe +0.575; Net Sharpe -2.865; Net Return -15.9%/yr; Cost ÷ Gross P&L 5.98x; Max loss -$178,052 on $100k account.",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "Micro commission $1.20 round turn + 1 tick entry slippage + 1 tick exit slippage = $11.00 total break-even cost per trade ($20,218 annual friction)."
+    },
+    {
+      "name": "Fast Day Trading (5-min)",
+      "ts": "00:04:35",
+      "logic": "Fast day trading setup executed on 5-minute charts holding positions for around 70 minutes and closing flat before market close.",
+      "entry_rules": [
+        "Enter trade setup on 5-minute chart upon trigger."
+      ],
+      "exit_rules": [
+        "Exit after ~70 minutes holding period or flat by market close; no overnight holding."
+      ],
+      "parameters": [
+        {
+          "name": "Timeframe",
+          "value": "5-minute"
+        },
+        {
+          "name": "Average Hold Time",
+          "value": "70 minutes"
+        },
+        {
+          "name": "Trade Frequency",
+          "value": "2 trades/day (504 trades/year)"
+        }
+      ],
+      "markets_assets": [
+        "MNQ (Micro E-mini Nasdaq-100 futures)"
+      ],
+      "stated_performance": "Gross Sharpe +0.242; Net Sharpe -0.613; Net Return -3.0%/yr; Cost ÷ Gross P&L 3.55x.",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "Micro commission $1.20 round turn plus 1 tick entry and exit slippage."
+    },
+    {
+      "name": "Patient Day Trading (Donchian Breakout - 15-min)",
+      "ts": "00:05:39",
+      "logic": "Patient day trading strategy waiting for 1 high-conviction setup per day on 15-minute bars using Donchian channels.",
+      "entry_rules": [
+        "Buy on a break above the 20-bar high."
+      ],
+      "exit_rules": [
+        "Exit on a break below the 10-bar low or flat at close (holding ~3 hours)."
+      ],
+      "parameters": [
+        {
+          "name": "Timeframe",
+          "value": "15-minute"
+        },
+        {
+          "name": "Average Hold Time",
+          "value": "3 hours"
+        },
+        {
+          "name": "Trade Frequency",
+          "value": "1 trade/day (208 trades/year)"
+        },
+        {
+          "name": "Donchian High Period",
+          "value": "20 bars"
+        },
+        {
+          "name": "Donchian Low Period",
+          "value": "10 bars"
+        }
+      ],
+      "markets_assets": [
+        "MNQ (Micro E-mini Nasdaq-100 futures)"
+      ],
+      "stated_performance": "Gross Sharpe +0.483; Net Sharpe +0.141; Net Return +2.0%/yr; Cost ÷ Gross P&L 0.71x; Ending account equity $116,629 on $100k capital.",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "Transaction costs consume 71% of gross profit."
+    },
+    {
+      "name": "Hourly Donchian Breakout (Rank 6)",
+      "ts": "00:07:11",
+      "logic": "60-minute Donchian channel breakout strategy held across overnight sessions.",
+      "entry_rules": [
+        "Enter on 60-minute Donchian channel upper/lower channel breakout on MNQ futures"
+      ],
+      "exit_rules": [
+        "Exit on opposite channel breakout or system signal"
+      ],
+      "parameters": [
+        {
+          "name": "timeframe",
+          "value": "60-minute"
+        },
+        {
+          "name": "asset",
+          "value": "MNQ (Micro E-mini Nasdaq-100)"
+        }
+      ],
+      "markets_assets": [
+        "MNQ"
+      ],
+      "stated_performance": "Net Sharpe: +0.628, Net Return/yr: 6.0%, ~132 trades/yr, Cost/gross P&L: 0.23x, Max Drawdown: -13%",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "Transaction cost drag eats 23% of gross P&L."
+    },
+    {
+      "name": "Options Premium Selling (Rank 5)",
+      "ts": "00:07:57",
+      "logic": "Systematic option selling strategy collecting option premium for taking market risk.",
+      "entry_rules": [
+        "Systematic short option / index put selling (benchmarked to CBOE PUT Index)"
+      ],
+      "exit_rules": [
+        "Option expiration or periodic index roll"
+      ],
+      "parameters": [
+        {
+          "name": "benchmark_index",
+          "value": "CBOE PUT Index"
+        }
+      ],
+      "markets_assets": [
+        "CBOE PUT / S&P 500 Options"
+      ],
+      "stated_performance": "Net Sharpe: +0.685, Net Return/yr: 9.2%, Max Drawdown: -29% (2020 crash), outperformed SPY in 9 of 20 sub-periods",
+      "costs_slippage_mentioned": false,
+      "costs_slippage_detail": ""
+    },
+    {
+      "name": "Position Trading Donchian Breakout (Rank 4)",
+      "ts": "00:09:03",
+      "logic": "Daily 55-bar Donchian channel trend following breakout on QQQ.",
+      "entry_rules": [
+        "55-bar high daily breakout on QQQ"
+      ],
+      "exit_rules": [
+        "55-bar low trailing channel exit"
+      ],
+      "parameters": [
+        {
+          "name": "lookback_period",
+          "value": "55 bars"
+        },
+        {
+          "name": "timeframe",
+          "value": "daily"
+        }
+      ],
+      "markets_assets": [
+        "QQQ"
+      ],
+      "stated_performance": "Net Sharpe: +0.714, Net Return/yr: 9.2%, ~3 trades/yr, avg hold 63 days, Cost/gross: 0.00x, Max Drawdown: -12%",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "Cost ratio is ~0.00x due to extremely low trade frequency (~3 trades/yr)."
+    },
+    {
+      "name": "Swing Trading Donchian Breakout (Rank 3)",
+      "ts": "00:09:48",
+      "logic": "Daily 20-bar Donchian channel trend following breakout on SPY.",
+      "entry_rules": [
+        "20-bar high daily breakout on SPY"
+      ],
+      "exit_rules": [
+        "20-bar low trailing channel exit"
+      ],
+      "parameters": [
+        {
+          "name": "lookback_period",
+          "value": "20 bars"
+        },
+        {
+          "name": "timeframe",
+          "value": "daily"
+        }
+      ],
+      "markets_assets": [
+        "SPY"
+      ],
+      "stated_performance": "Net Sharpe: +0.797, Net Return/yr: 8.0%, ~6 trades/yr, avg hold 33 days, Cost/gross: 0.01x, Max Drawdown: -7%",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "Cost ratio is 0.01x."
+    },
+    {
+      "name": "SPY Buy & Hold (Rank 2)",
+      "ts": "00:10:47",
+      "logic": "Passive long-term allocation holding S&P 500 ETF.",
+      "entry_rules": [
+        "Buy SPY at inception"
+      ],
+      "exit_rules": [
+        "None (Hold indefinitely)"
+      ],
+      "parameters": [],
+      "markets_assets": [
+        "SPY"
+      ],
+      "stated_performance": "Net Sharpe: +0.848, Net Return/yr: 15.5%, turned $100k into $951,061 over 16 years, Cost/gross: 0.00x, Max Drawdown: -34%",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "Cost ratio is 0.00x."
+    },
+    {
+      "name": "QQQ Buy & Hold (Rank 1)",
+      "ts": "00:11:43",
+      "logic": "Passive long-term allocation holding Nasdaq-100 ETF.",
+      "entry_rules": [
+        "Buy QQQ at inception"
+      ],
+      "exit_rules": [
+        "None (Hold indefinitely)"
+      ],
+      "parameters": [],
+      "markets_assets": [
+        "QQQ"
+      ],
+      "stated_performance": "Net Sharpe: +0.938, Net Return/yr: 20.4%, turned $100k into $1,873,048 over 16 years, Cost/gross: 0.00x, Max Drawdown: -35%",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "Cost ratio is 0.00x."
+    },
+    {
+      "name": "Donchian Channel Breakout",
+      "ts": "00:14:32",
+      "logic": "Trend-following breakout strategy. Enters long when price breaks the N-bar high and exits when price drops below the M-bar low (or at session close for intraday).",
+      "entry_rules": [
+        "Enter long on a break of the N-bar high (e.g. 20-period high)."
+      ],
+      "exit_rules": [
+        "Exit on a break of the M-bar low (e.g. 10-period low).",
+        "For intraday horizons, exit at session close."
+      ],
+      "parameters": [
+        {
+          "name": "Entry lookback N",
+          "value": "20 periods"
+        },
+        {
+          "name": "Exit lookback M",
+          "value": "10 periods"
+        }
+      ],
+      "markets_assets": [
+        "SPY",
+        "QQQ",
+        "GLD",
+        "TLT",
+        "IWM",
+        "VXX",
+        "Micro futures"
+      ],
+      "stated_performance": "",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "$4.00 RT standard contracts / $1.25 RT micros, 1 tick entry/exit slippage, 10 bps execution penalty, 50c commission + 15 bps spread RT on ETF/QQQ, 50 bps per year short borrow rate."
+    },
+    {
+      "name": "Bollinger Band Fade",
+      "ts": "00:14:37",
+      "logic": "Mean reversion fade strategy. Enters long when price drops below lower Bollinger Band and exits when price closes back above moving average.",
+      "entry_rules": [
+        "Enter long when price closes below the lower Bollinger Band."
+      ],
+      "exit_rules": [
+        "Exit when price closes back above the moving average.",
+        "For intraday horizons, exit flat by close."
+      ],
+      "parameters": [
+        {
+          "name": "Lookback period",
+          "value": "20 periods"
+        },
+        {
+          "name": "Standard deviations",
+          "value": "2.0"
+        }
+      ],
+      "markets_assets": [
+        "SPY",
+        "QQQ",
+        "GLD",
+        "TLT",
+        "IWM",
+        "VXX",
+        "Micro futures"
+      ],
+      "stated_performance": "",
+      "costs_slippage_mentioned": true,
+      "costs_slippage_detail": "Evaluated using the costs.py configuration module shared across all strategies."
+    }
+  ],
+  "tools_and_data": [
+    {
+      "name": "Claude (Opus 3.5)",
+      "type": "api",
+      "how_used": "Used to design, program, and structure the layered backtesting framework."
+    },
+    {
+      "name": "1-Minute Futures Data",
+      "type": "dataset",
+      "how_used": "16 years of continuous 1-minute historical price bars for ES and NQ/MNQ futures."
+    },
+    {
+      "name": "Daily ETF Data",
+      "type": "dataset",
+      "how_used": "Daily historical price data for SPY and QQQ ETFs."
+    },
+    {
+      "name": "CBOE PUT Index",
+      "type": "dataset",
+      "how_used": "Used as the published benchmark data source for evaluating options premium selling performance."
+    },
+    {
+      "name": "Donchian Channel",
+      "type": "other",
+      "how_used": "Technical indicator rule used for breakout entries and trailing exits across hourly, position, and swing trading tests."
+    },
+    {
+      "name": "Claude / Claude Code",
+      "type": "platform",
+      "how_used": "LLM platform used to execute multi-layered prompts for building trading backtests, cost models, and robustness analyses."
+    },
+    {
+      "name": "yfinance",
+      "type": "library",
+      "how_used": "Python library specified in prompts to pull daily total-return ETF price history and SPY benchmark data."
+    },
+    {
+      "name": "FRED",
+      "type": "api",
+      "how_used": "Federal Reserve Economic Data API used to retrieve DTB3 (3-month Treasury bill rate) for risk-free interest rates."
+    },
+    {
+      "name": "CBOE",
+      "type": "dataset",
+      "how_used": "Published PUT and BXM index history retrieved for premium-selling benchmark comparisons."
+    },
+    {
+      "name": "Parquet",
+      "type": "other",
+      "how_used": "File format used to store 1-minute intraday futures/ETF datasets and daily price series."
+    }
+  ],
+  "open_questions": [
+    {
+      "ts": "00:02:00",
+      "assertion": "A mechanical backtest accurately reflects average trader performance across different trading timeframes.",
+      "missing_support": "Does not account for customized stop-loss/take-profit mechanics, discretionary timing, or alternative order types used by human traders."
+    },
+    {
+      "ts": "00:06:12",
+      "assertion": "Discretionary traders can turn high-frequency day trading profitable by identifying and skipping the worst 5% of losing trades in advance.",
+      "missing_support": "Assumes human discretionary judgment can select 1,579 specific losing trades out of 42,914 1-minute dots without empirical validation of human accuracy."
+    },
+    {
+      "ts": "00:08:44",
+      "assertion": "Options premium selling requires sitting out during volatility spikes.",
+      "missing_support": "No explicit volatility filter rule or market timing indicator was provided for when to sit out during market spikes."
+    },
+    {
+      "ts": "00:13:00",
+      "assertion": "Top discretionary intraday traders achieve a higher performance ceiling than buy-and-hold benchmarks on 1-minute and 5-minute charts.",
+      "missing_support": "No empirical data, track record, or sample size of discretionary traders was provided to substantiate the high discretionary performance ceiling claim."
+    },
+    {
+      "ts": "00:14:32",
+      "assertion": "High-frequency intraday trading performance systematically degrades relative to lower-frequency trading purely due to transaction costs.",
+      "missing_support": "The video presents prompt templates to test this hypothesis, but does not display backtest empirical results or output data in this clip."
+    }
+  ],
+  "schema_version": "1.0",
+  "video": {
+    "id": "zGmsARTATvQ",
+    "url": "https://www.youtube.com/watch?v=zGmsARTATvQ",
+    "title": "Claude Ranks Every Trading Style From Worst to Best",
+    "channel": "AI Pathways",
+    "duration_s": 903
+  },
+  "run": {
+    "model": "gemini-3.8-flash",
+    "model_version": "gemini-3.6-flash",
+    "analyzed_at": "2026-11-06T08:57:13Z",
+    "low_res": false,
+    "engine": "static",
+    "chunked": true,
+    "windows": [
+      {
+        "start_s": 0,
+        "end_s": 420
+      },
+      {
+        "start_s": 420,
+        "end_s": 840
+      },
+      {
+        "start_s": 840,
+        "end_s": 903
+      }
+    ],
+    "calls": 4,
+    "usage": {
+      "prompt_tokens": 84347,
+      "output_tokens": 18869,
+      "thinking_tokens": 18378,
+      "total_tokens": 121594
+    },
+    "tool_version": "0.1.0"
+  }
+}
