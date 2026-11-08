@@ -1,0 +1,344 @@
+{
+  "summary": "The creator reviews his top Washington, D.C. neighborhoods to consider when moving to the city, discussing their distinctive vibes, transit accessibility, housing styles, and downsides, covering Columbia Heights, Adams Morgan, Georgetown, U Street, Navy Yard, Dupont Circle, Logan Circle, Mount Vernon, The Wharf, NoMa, and an honorable mention for Capitol Hill.",
+  "segments": [
+    {
+      "start_ts": "00:00:00",
+      "end_ts": "00:00:32",
+      "topic": "Introduction and Winter in DC",
+      "key_points": [
+        "Creator vents about the 2024–2025 winter being the worst in his four years living in Washington, D.C.",
+        "Introduces a list of 10 neighborhoods prospective residents should consider before moving to Washington, D.C."
+      ]
+    },
+    {
+      "start_ts": "00:00:32",
+      "end_ts": "00:01:24",
+      "topic": "No. 10: Columbia Heights",
+      "key_points": [
+        "Known for diversity, culture, and varied food dining options.",
+        "Housing features a mix of classic row houses and newer modern apartment buildings.",
+        "Street parking is described as extremely difficult ('survival of the fittest').",
+        "Ranked lower on the creator's list due to overcrowded metro areas and narrow, busy streets."
+      ]
+    },
+    {
+      "start_ts": "00:01:24",
+      "end_ts": "00:02:05",
+      "topic": "No. 9: Adams Morgan (AdMo)",
+      "key_points": [
+        "Known as nightlife central with bars, clubs, late-night food, and lively music.",
+        "Not suited for individuals seeking quiet living.",
+        "Lacks direct access to a dedicated Metrorail station."
+      ]
+    },
+    {
+      "start_ts": "00:02:05",
+      "end_ts": "00:02:46",
+      "topic": "No. 8: Georgetown",
+      "key_points": [
+        "Features historic cobblestone streets, waterfront dining, and classic architecture.",
+        "High cost of living and expensive housing.",
+        "Does not have a direct Metrorail stop within the neighborhood."
+      ]
+    },
+    {
+      "start_ts": "00:02:46",
+      "end_ts": "00:03:22",
+      "topic": "No. 7: U Street",
+      "key_points": [
+        "Historically known as 'Black Broadway' with deep cultural roots and live music venues.",
+        "Energetic night scene with relatively affordable living options compared to other central neighborhoods.",
+        "Can feel sketchy or have safety concerns at certain times."
+      ]
+    },
+    {
+      "start_ts": "00:03:22",
+      "end_ts": "00:04:22",
+      "topic": "No. 6: Navy Yard",
+      "key_points": [
+        "Known for waterfront views, Nationals Park baseball stadium, and new luxury developments.",
+        "Features ongoing construction and a polished, corporate feel.",
+        "Geographically separated from the rest of the city by an elevated freeway/highway corridor."
+      ]
+    },
+    {
+      "start_ts": "00:04:22",
+      "end_ts": "00:04:57",
+      "topic": "No. 5: Dupont Circle",
+      "key_points": [
+        "Known for embassies, historic architecture, art galleries, brunch spots, and farmers markets.",
+        "Diverse nightlife with unique bars.",
+        "Carries a high cost of living."
+      ]
+    },
+    {
+      "start_ts": "00:04:57",
+      "end_ts": "00:05:28",
+      "topic": "No. 4: Logan Circle",
+      "key_points": [
+        "Features Victorian-era row homes, independent boutique shopping, and cocktail bars.",
+        "More relaxed, conversational nightlife atmosphere compared to party-centric areas.",
+        "Expensive housing market."
+      ]
+    },
+    {
+      "start_ts": "00:05:28",
+      "end_ts": "00:06:01",
+      "topic": "No. 3: Mount Vernon Area",
+      "key_points": [
+        "Includes Mount Vernon Square and Mount Vernon Triangle.",
+        "Combines historic row houses with brand-new residential high-rises.",
+        "Close proximity to downtown with abundant restaurant options."
+      ]
+    },
+    {
+      "start_ts": "00:06:01",
+      "end_ts": "00:06:53",
+      "topic": "No. 2: The Wharf",
+      "key_points": [
+        "Waterfront development with luxury residential units, high-end dining, concert venues (The Anthem), and water activities.",
+        "Expensive area that feels like a distinct enclave.",
+        "Creator notes personal residence here, while noting situational awareness is still needed."
+      ]
+    },
+    {
+      "start_ts": "00:06:53",
+      "end_ts": "00:08:05",
+      "topic": "No. 1: NoMa",
+      "key_points": [
+        "Stands for 'North of Massachusetts Avenue'.",
+        "Fastest-growing neighborhood in D.C. featuring modern apartment buildings, cafes, and a prominent Whole Foods market.",
+        "Immediate proximity to Union Station providing extensive regional transit.",
+        "Chosen as number one due to long-term growth potential and contemporary amenities."
+      ]
+    },
+    {
+      "start_ts": "00:08:05",
+      "end_ts": "00:09:22",
+      "topic": "Honorable Mention: Capitol Hill & Outro",
+      "key_points": [
+        "Honorable mention given to Capitol Hill for its historic row houses, Eastern Market, family-friendly atmosphere, and political presence.",
+        "Closing remarks inviting viewers to share neighborhood preferences."
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "ts": "00:00:16",
+      "claim": "The 2024-2025 winter has been by far the worst winter in the creator's four years living in Washington, D.C.",
+      "evidence_shown": "anecdote",
+      "caveats": "Personal observation based on a four-year residency period."
+    },
+    {
+      "ts": "00:01:52",
+      "claim": "Adams Morgan lacks direct Metrorail line access.",
+      "evidence_shown": "none",
+      "caveats": ""
+    },
+    {
+      "ts": "00:02:27",
+      "claim": "Metrorail bypasses Georgetown completely.",
+      "evidence_shown": "none",
+      "caveats": ""
+    },
+    {
+      "ts": "00:07:01",
+      "claim": "NoMa is Washington, D.C.'s fastest growing neighborhood.",
+      "evidence_shown": "none",
+      "caveats": "Stated as general characterization without official demographic or construction metrics cited."
+    }
+  ],
+  "visuals": [
+    {
+      "ts": "00:00:35",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "COLUMBIA HEIGHTS",
+        "Adams Morgan",
+        "Park View",
+        "Howard University",
+        "Pleasant Plains"
+      ],
+      "what_it_argues": "Displays a mobile map marking the boundary and geographic location of Columbia Heights.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:01:27",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "ADAMS MORGAN",
+        "The LINE DC",
+        "Kalorama",
+        "Dupont Circle"
+      ],
+      "what_it_argues": "Displays a mobile map marking Adams Morgan in Northwest D.C.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:02:07",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "GEORGETOWN",
+        "Naval Observatory",
+        "Potomac River",
+        "Rosslyn"
+      ],
+      "what_it_argues": "Displays a mobile map marking the Georgetown area.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:02:48",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "U St NW",
+        "HOWARD UNIVERSITY",
+        "LOGAN CIRCLE",
+        "DOWNTOWN"
+      ],
+      "what_it_argues": "Displays a mobile map locating the U Street corridor.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:03:25",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "NAVY YARD",
+        "CAPITOL HILL",
+        "Nationals Park",
+        "The Yards"
+      ],
+      "what_it_argues": "Displays a mobile map highlighting Navy Yard near the Anacostia River waterfront.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:04:06",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "I-695",
+        "M St SE",
+        "Nationals Park",
+        "Navy Yard"
+      ],
+      "what_it_argues": "Shows the highway corridor separating Navy Yard from northern neighborhoods.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:04:24",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "DUPONT CIRCLE",
+        "The Dupont Circle Hotel",
+        "The White House"
+      ],
+      "what_it_argues": "Displays a mobile map locating Dupont Circle.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:04:59",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "LOGAN CIRCLE",
+        "14th Street NW",
+        "Thomas Circle NW"
+      ],
+      "what_it_argues": "Displays a mobile map marking Logan Circle along 14th Street.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:05:31",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "MT VERNON SQUARE",
+        "DC Convention Center",
+        "Judiciary Square"
+      ],
+      "what_it_argues": "Displays a mobile map marking Mount Vernon Square and Triangle.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:06:03",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "The Wharf",
+        "Southwest Waterfront",
+        "Potomac River"
+      ],
+      "what_it_argues": "Displays a mobile map locating The Wharf along the Southwest Waterfront.",
+      "confidence": "high"
+    },
+    {
+      "ts": "00:06:56",
+      "type": "screen",
+      "title": "",
+      "axes_or_columns": [],
+      "values_readable": [
+        "NoMa",
+        "Union Market",
+        "Massachusetts Ave"
+      ],
+      "what_it_argues": "Displays a mobile map marking NoMa north of Union Station and Massachusetts Avenue.",
+      "confidence": "high"
+    }
+  ],
+  "formulas": [],
+  "strategies": [],
+  "tools_and_data": [
+    {
+      "name": "Apple Maps / Google Maps",
+      "type": "platform",
+      "how_used": "Used on mobile device screens to display neighborhood boundaries and spatial orientation within Washington, D.C."
+    }
+  ],
+  "open_questions": [
+    {
+      "ts": "00:07:01",
+      "assertion": "NoMa is Washington, D.C.'s fastest growing neighborhood.",
+      "missing_support": "No census figures, construction volume data, or demographic statistics are provided to support the claim."
+    }
+  ],
+  "schema_version": "1.0",
+  "video": {
+    "id": "-pxPSU9uiYY",
+    "url": "https://www.youtube.com/watch?v=-pxPSU9uiYY",
+    "title": "Top 10 Best Neighborhoods in Washington, DC (Where Should You Live?)",
+    "channel": "Making Big Moves",
+    "duration_s": 562
+  },
+  "run": {
+    "model": "gemini-3.8-flash",
+    "model_version": "gemini-3.8-flash",
+    "analyzed_at": "2026-11-08T15:11:29Z",
+    "low_res": false,
+    "engine": "interactions",
+    "chunked": false,
+    "windows": [],
+    "calls": 1,
+    "usage": {
+      "prompt_tokens": 51687,
+      "output_tokens": 3172,
+      "thinking_tokens": 1060,
+      "total_tokens": 55919
+    },
+    "tool_version": "0.1.0"
+  }
+}
